@@ -19,7 +19,7 @@ function Syscalls() {
       const data = await getCallableSyscalls()
       setSyscalls(data.syscalls || [])
     } catch (err) {
-      setError(err.message || 'Failed to load syscalls')
+      setError(err.message || '시스템콜 목록을 불러오지 못했습니다.')
     } finally {
       setLoading(false)
     }
@@ -30,23 +30,23 @@ function Syscalls() {
   )
 
   if (loading) {
-    return <div className="loading">Loading syscalls...</div>
+    return <div className="loading">시스템콜 목록을 불러오는 중...</div>
   }
 
   return (
     <div>
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2>Callable System Calls</h2>
+          <h2>호출 가능한 시스템콜</h2>
           <button className="button" onClick={loadSyscalls}>
-            Refresh
+            새로고침
           </button>
         </div>
-        <p>Total syscalls: {syscalls.length}</p>
+        <p>총 시스템콜 수: {syscalls.length}</p>
         <div style={{ marginTop: '15px' }}>
           <input
             type="text"
-            placeholder="Search syscalls..."
+            placeholder="시스템콜 검색..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -68,7 +68,7 @@ function Syscalls() {
       {filteredSyscalls.length === 0 ? (
         <div className="card">
           <p style={{ textAlign: 'center', color: '#7f8c8d' }}>
-            {searchTerm ? 'No syscalls found matching your search' : 'No syscalls found'}
+            {searchTerm ? '검색 조건에 맞는 시스템콜이 없습니다.' : '시스템콜 정보가 없습니다.'}
           </p>
         </div>
       ) : (
@@ -79,7 +79,7 @@ function Syscalls() {
             </div>
             {syscall.args && syscall.args.length > 0 ? (
               <div>
-                <strong>Arguments:</strong>
+                <strong>인자:</strong>
                 <ul style={{ marginTop: '10px', marginLeft: '20px' }}>
                   {syscall.args.map((arg, argIndex) => (
                     <li key={argIndex} style={{ marginBottom: '5px', fontFamily: 'monospace' }}>
@@ -89,7 +89,7 @@ function Syscalls() {
                 </ul>
               </div>
             ) : (
-              <p style={{ color: '#7f8c8d' }}>No arguments</p>
+              <p style={{ color: '#7f8c8d' }}>인자 없음</p>
             )}
           </div>
         ))

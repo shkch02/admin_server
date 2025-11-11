@@ -2,23 +2,6 @@
 
 관리 웹서버 프론트엔드(React)와 백엔드(Golang) 구현
 
-## 실행 
-
-### 벡엔드 실행
-```
-cd backend
-go mod download
-go run main.go
-```
-
-
-### 프론트 실행
-```
-cd frontend
-npm install
-npm run dev
-```
-
 
 ## 프로젝트 구조
 
@@ -82,6 +65,8 @@ admin_server/
 - `POST /api/v1/tests/trigger` - 테스트 공격 트리거
 
 ## 실행 방법
+
+재부팅시에는 마지막 명령어만
 
 ### 백엔드 실행
 

@@ -20,7 +20,7 @@ function TestAttack() {
       const data = await getRules()
       setRules(data.rules || [])
     } catch (err) {
-      setError('Failed to load rules: ' + err.message)
+      setError('룰을 불러오지 못했습니다: ' + err.message)
     } finally {
       setLoading(false)
     }
@@ -33,23 +33,23 @@ function TestAttack() {
       setSuccess(null)
 
       const response = await triggerTest(testType)
-      setSuccess(`Test triggered successfully! Job: ${response.job_name}`)
+      setSuccess(`공격 테스트가 실행되었습니다! 생성된 Job: ${response.job_name}`)
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Failed to trigger test')
+      setError(err.response?.data?.error || err.message || '공격 테스트 실행에 실패했습니다.')
     } finally {
       setTriggering(false)
     }
   }
 
   if (loading) {
-    return <div className="loading">Loading rules...</div>
+    return <div className="loading">룰 정보를 불러오는 중...</div>
   }
 
   return (
     <div>
       <div className="card">
-        <h2>Test Attack</h2>
-        <p>Trigger a test attack to verify that the security rules are working correctly.</p>
+        <h2>공격 테스트</h2>
+        <p>보안 룰이 정상 동작하는지 확인하기 위해 테스트 공격을 실행합니다.</p>
       </div>
 
       {error && (
@@ -65,13 +65,13 @@ function TestAttack() {
       )}
 
       <div className="card">
-        <h3>Available Test Attacks</h3>
+        <h3>테스트 가능한 공격</h3>
         <p style={{ marginBottom: '20px', color: '#7f8c8d' }}>
-          Select a rule to test. This will create a K8s Job that attempts to perform the prohibited action.
+          테스트할 룰을 선택하면 해당 룰을 위반하는 동작을 수행하는 Kubernetes Job이 생성됩니다.
         </p>
 
         {rules.length === 0 ? (
-          <p style={{ color: '#7f8c8d' }}>No rules available for testing</p>
+          <p style={{ color: '#7f8c8d' }}>테스트할 수 있는 룰이 없습니다.</p>
         ) : (
           <div style={{ display: 'grid', gap: '15px' }}>
             {rules.map((rule, index) => (
@@ -87,7 +87,7 @@ function TestAttack() {
                   onClick={() => handleTriggerTest(rule.rule_id)}
                   disabled={triggering}
                 >
-                  {triggering ? 'Triggering...' : 'Trigger Test Attack'}
+                  {triggering ? '실행 중...' : '공격 테스트 실행'}
                 </button>
               </div>
             ))}
@@ -96,12 +96,12 @@ function TestAttack() {
       </div>
 
       <div className="card">
-        <h3>How it works</h3>
+        <h3>동작 방식</h3>
         <ul style={{ lineHeight: '1.8' }}>
-          <li>Clicking a "Trigger Test Attack" button creates a Kubernetes Job</li>
-          <li>The Job attempts to perform the action that the rule is designed to detect</li>
-          <li>The eBPF monitor should detect the syscall and trigger an alert</li>
-          <li>Check the Alerts page to see if the attack was detected</li>
+          <li>"공격 테스트 실행" 버튼을 누르면 Kubernetes Job이 생성됩니다.</li>
+          <li>생성된 Job은 해당 룰이 탐지해야 하는 금지 동작을 시도합니다.</li>
+          <li>eBPF 모니터가 시스템콜을 감지하여 알림을 발생시켜야 합니다.</li>
+          <li>알림 페이지에서 공격이 탐지되었는지 확인하세요.</li>
         </ul>
       </div>
     </div>

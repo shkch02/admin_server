@@ -13,19 +13,19 @@ function Navigation() {
   return (
     <nav className="nav">
       <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
-        Rules
+        룰 현황
       </Link>
       <Link to="/update-rules" className={location.pathname === '/update-rules' ? 'active' : ''}>
-        Update Rules
+        룰 수정
       </Link>
       <Link to="/alerts" className={location.pathname === '/alerts' ? 'active' : ''}>
-        Alerts
+        알림 로그
       </Link>
       <Link to="/syscalls" className={location.pathname === '/syscalls' ? 'active' : ''}>
-        Syscalls
+        시스템콜 목록
       </Link>
       <Link to="/test-attack" className={location.pathname === '/test-attack' ? 'active' : ''}>
-        Test Attack
+        공격 테스트
       </Link>
     </nav>
   )
@@ -36,8 +36,8 @@ function App() {
     <Router>
       <div className="container">
         <div className="header">
-          <h1>IPS Admin Server</h1>
-          <p>eBPF System Call based Security Violation Detection</p>
+          <h1>IPS 관리자 콘솔</h1>
+          <p>eBPF 시스템콜 기반 보안 위협 탐지</p>
           <Navigation />
         </div>
         <Routes>

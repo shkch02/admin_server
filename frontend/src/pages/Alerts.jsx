@@ -21,7 +21,7 @@ function Alerts() {
       const data = await getAlerts(limit)
       setAlerts(data.alerts || [])
     } catch (err) {
-      setError(err.message || 'Failed to load alerts')
+      setError(err.message || '알림을 불러오지 못했습니다.')
     } finally {
       setLoading(false)
     }
@@ -50,17 +50,17 @@ function Alerts() {
   }
 
   if (loading && alerts.length === 0) {
-    return <div className="loading">Loading alerts...</div>
+    return <div className="loading">알림을 불러오는 중...</div>
   }
 
   return (
     <div>
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2>Security Alerts</h2>
+          <h2>보안 알림</h2>
           <div>
             <label style={{ marginRight: '10px' }}>
-              Limit:
+              표시 개수:
               <input
                 type="number"
                 value={limit}
@@ -71,11 +71,11 @@ function Alerts() {
               />
             </label>
             <button className="button" onClick={loadAlerts}>
-              Refresh
+              새로고침
             </button>
           </div>
         </div>
-        <p>Total alerts: {alerts.length}</p>
+        <p>총 알림 수: {alerts.length}</p>
       </div>
 
       {error && (
@@ -86,7 +86,7 @@ function Alerts() {
 
       {alerts.length === 0 ? (
         <div className="card">
-          <p style={{ textAlign: 'center', color: '#7f8c8d' }}>No alerts found</p>
+          <p style={{ textAlign: 'center', color: '#7f8c8d' }}>알림이 없습니다.</p>
         </div>
       ) : (
         alerts.map((alert, index) => (
@@ -104,13 +104,13 @@ function Alerts() {
                     fontSize: '12px',
                   }}
                 >
-                  {alert.severity || 'Unknown'}
+                  {alert.severity || '미확인'}
                 </span>
               </div>
               <span className="alert-timestamp">{formatTimestamp(alert.timestamp)}</span>
             </div>
             <div className="alert-rule">
-              <strong>Rule:</strong> {alert.rule_id}
+              <strong>룰:</strong> {alert.rule_id}
             </div>
             <div style={{ marginTop: '5px', fontSize: '14px', color: '#7f8c8d' }}>
               {alert.rule_description}
@@ -120,7 +120,7 @@ function Alerts() {
             </div>
             {alert.syscall_log && (
               <details style={{ marginTop: '10px' }}>
-                <summary style={{ cursor: 'pointer', color: '#3498db' }}>View Syscall Log</summary>
+                <summary style={{ cursor: 'pointer', color: '#3498db' }}>시스템콜 로그 보기</summary>
                 <pre style={{
                   marginTop: '10px',
                   padding: '10px',

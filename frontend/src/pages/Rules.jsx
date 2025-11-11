@@ -19,7 +19,7 @@ function Rules() {
       const data = await getRules()
       setRules(data)
     } catch (err) {
-      setError(err.message || 'Failed to load rules')
+      setError(err.message || '룰 정보를 불러오지 못했습니다.')
     } finally {
       setLoading(false)
     }
@@ -33,29 +33,29 @@ function Rules() {
   }
 
   if (loading) {
-    return <div className="loading">Loading rules...</div>
+    return <div className="loading">룰 정보를 불러오는 중...</div>
   }
 
   if (error) {
-    return <div className="error">Error: {error}</div>
+    return <div className="error">오류: {error}</div>
   }
 
   if (!rules) {
-    return <div className="error">No rules found</div>
+    return <div className="error">등록된 룰이 없습니다.</div>
   }
 
   return (
     <div>
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2>Security Rules</h2>
+          <h2>보안 룰 현황</h2>
           <button className="button" onClick={loadRules}>
-            Refresh
+            새로고침
           </button>
         </div>
-        <p><strong>Version:</strong> {rules.ruleset_version}</p>
-        <p><strong>Description:</strong> {rules.description}</p>
-        <p><strong>Total Rules:</strong> {rules.rules.length}</p>
+        <p><strong>버전:</strong> {rules.ruleset_version}</p>
+        <p><strong>설명:</strong> {rules.description}</p>
+        <p><strong>총 룰 수:</strong> {rules.rules.length}</p>
       </div>
 
       {rules.rules.map((rule, index) => (
@@ -63,7 +63,7 @@ function Rules() {
           <div className="rule-id">{rule.rule_id}</div>
           <div className="rule-description">{rule.description}</div>
           <div style={{ marginTop: '15px' }}>
-            <strong>Conditions:</strong>
+            <strong>조건:</strong>
             {rule.conditions.map((condition, condIndex) => (
               <div key={condIndex} className="condition">
                 <strong>{condition.field}</strong> {condition.operator} {formatValue(condition.value)}
@@ -78,7 +78,7 @@ function Rules() {
           className="button"
           onClick={() => setShowYaml(!showYaml)}
         >
-          {showYaml ? 'Hide' : 'Show'} YAML Source
+          {showYaml ? 'YAML 원본 숨기기' : 'YAML 원본 보기'}
         </button>
         {showYaml && (
           <pre style={{ marginTop: '15px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '4px', overflow: 'auto' }}>
