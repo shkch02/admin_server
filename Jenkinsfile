@@ -40,7 +40,7 @@ pipeline {
             steps {
                 // Harbor 로그인 (파이프라인 시작 시 한 번만)
                 withCredentials([usernamePassword(credentialsId: env.HARBOR_CREDS_ID, usernameVariable: 'HARBOR_USER', passwordVariable: 'HARBOR_PASS')]) {
-                    sh "docker login ${env.HARBOR_URL} -u ${HARBOR_USER} -p ${HARBOR_PASS}"
+                    sh "docker login ${env.HARBOR_URL} -u ${HARBOR_USER} -p '${HARBOR_PASS}'"
                 }
 
                 // 1. 백엔드 빌드/푸시 (먼저 실행)
