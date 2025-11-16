@@ -16,7 +16,7 @@ pipeline {
     }
 
     stages {
-        // 1단계: Git 저장소에서 코드 가져오기
+        // 1단계: Git 저장소에서 코드 가져오기 ㅇ
         stage('Checkout') {
             steps {
                 checkout scm
