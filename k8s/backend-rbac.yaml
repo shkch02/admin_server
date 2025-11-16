@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin-server-sa
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: configmap-reader-writer
+  namespace: default
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch", "update", "patch"] # rule_service.go가 업데이트도 하므로 'update', 'patch' 권한 추가
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: admin-server-bind-configmap-access
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: admin-server-sa
+  namespace: default
+roleRef:
+  kind: Role
+  name: configmap-reader-writer
+  apiGroup: rbac.authorization.k8s.io

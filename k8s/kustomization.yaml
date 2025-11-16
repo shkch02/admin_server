@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# k8s 폴더 내의 모든 YAML 파일을 리소스로 포함
+resources:
+- rule-configmap.yaml
+- redis-secret.yaml  # 이 파일은 수동으로 생성해야 합니다.
+- backend-rbac.yaml
+- backend-deployment.yaml
+- frontend-deployment.yaml
+
+# Jenkins가 이 부분을 동적으로 수정하여 이미지 태그를 변경합니다.
+images:
+  # 백엔드 이미지 (이전 YAML에서 사용한 이미지 경로)
+- name: shkch.duckdns.org/webserver/admin-server
+  newTag: latest # 이 'latest' 값을 Jenkins가 덮어씁니다.
+  # 프론트엔드 이미지 (이전 YAML에서 사용한 이미지 경로)
+- name: shkch.duckdns.org/webserver/admin-frontend
+  newTag: latest # 이 'latest' 값을 Jenkins가 덮어씁니다.

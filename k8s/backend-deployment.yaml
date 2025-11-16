@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-server-backend
+  namespace: default
+  labels:
+    app: admin-server-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admin-server-backend
+  template:
+    metadata:
+      labels:
+        app: admin-server-backend
+    spec:
+      imagePullSecrets:
+      - name: harbor-creds
+      serviceAccountName: admin-server-sa
+      containers:
+      - name: admin-server-backend-container
+        image: "shkch.duckdns.org/webserver/admin-server:latest"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        
+        env:
+          - name: REDIS_HOST
+            value: "redis-ccsl"
+          - name: REDIS_PORT
+            value: "6379" 
+          - name: CLUSTER_SYSCALLS_REDIS_HOST
+            value: "your-syscall-redis-host.default.svc.cluster.local"
+          - name: CLUSTER_SYSCALLS_REDIS_PORT
+            value: "6379"
+            
+          # ConfigMap 이름을 환경 변수로 주입
+          - name: CONFIG_MAP_NAME
+            value: "rule-policy-config" # ConfigMap 이름 (아래 volumes와 통일해야 함)
+            
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+
+          #  중요한 추가 사항: ConfigMap 파일 경로를 환경 변수로 추가
+          - name: RULE_YAML_FILE_PATH # ConfigMap의 파일 경로를 애플리케이션에 알려줌
+            value: "/etc/config/rule.yaml" # mountPath와 ConfigMap 내부 파일 이름을 조합
+            
+        envFrom:
+          - secretRef:
+              name: admin-server-redis-secret
+              
+        #  ConfigMap을 컨테이너에 마운트하는 부분 추가
+        volumeMounts:
+        - name: rule-config-volume # 아래 volumes의 이름과 일치
+          mountPath: /etc/config # 컨테이너 내부에서 ConfigMap 파일이 마운트될 경로
+          readOnly: true
+        
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          
+      # ConfigMap을 Volume으로 정의하는 부분 추가
+      volumes:
+      - name: rule-config-volume # 컨테이너의 volumeMounts 이름과 일치
+        configMap:
+          name: rule-policy-config # 1단계에서 생성한 실제 ConfigMap 이름
+          items: # ConfigMap의 특정 키(파일 이름)만 마운트할 때 사용
+          - key: rule.yaml # ConfigMap 내부의 YAML 파일 이름 (key)
+            path: rule.yaml # 컨테이너 내부 (/etc/config/)에서 보일 파일 이름 (path)

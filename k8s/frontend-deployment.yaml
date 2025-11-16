@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-server-frontend
+  namespace: default
+  labels:
+    app: admin-server-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admin-server-frontend
+  template:
+    metadata:
+      labels:
+        app: admin-server-frontend
+    spec:
+      # Harbor 인증 Secret (백엔드와 동일)
+      imagePullSecrets:
+      - name: harbor-creds
+      containers:
+      - name: admin-server-frontend-container
+        # 3단계에서 푸시한 Harbor 이미지
+        image: "shkch.duckdns.org/webserver/admin-frontend:latest"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80 # Nginx 기본 포트
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-server-frontend-svc
+  namespace: default
+  labels:
+    app: admin-server-frontend
+spec:
+  # --- [수정된 부분] Service Type을 NodePort로 변경 ---
+  type: NodePort 
+  # ---------------------------------------------------
+  selector:
+    app: admin-server-frontend # 프론트엔드 Deployment의 Pod를 선택
+  ports:
+  - protocol: TCP
+    port: 80       # 서비스의 내부 포트
+    targetPort: 80 # 프론트엔드 컨테이너 포트 (일반적으로 80번)
+    # [선택 사항] 외부 포트(NodePort)를 명시적으로 지정할 수도 있음.
+    # NodePort를 지정하지 않으면 30000-32767 범위에서 자동으로 할당됩니다.
+    nodePort: 30080
