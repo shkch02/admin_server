@@ -16,7 +16,7 @@ pipeline {
     }
 
     stages {
-        // 1단계: Git 저장소에서 코드 가져오기 ㅇ
+        // 1단계: Git 저장소에서 코드 가져오기
         stage('Checkout') {
             steps {
                 checkout scm
@@ -36,13 +36,14 @@ pipeline {
 
         // 3단계: 백엔드/프론트엔드 이미지 병렬 빌드 및 푸시
         stage('Build & Push Images') {
-            steps {
+            steps { // <-- 'parallel' 스텝은 이 'steps' 블록 내부에 있어야 합니다.
+                
                 // Harbor 로그인 (파이프라인 시작 시 한 번만)
                 withCredentials([usernamePassword(credentialsId: env.HARBOR_CREDS_ID, usernameVariable: 'HARBOR_USER', passwordVariable: 'HARBOR_PASS')]) {
                     sh "docker login ${env.HARBOR_URL} -u ${HARBOR_USER} -p ${HARBOR_PASS}"
                 }
 
-                // 두 작업을 병렬로 실행 (Declarative Pipeline 문법에 맞게 수정됨)
+                // 두 작업을 병렬로 실행
                 parallel {
                     // 병렬 작업 1: 백엔드 빌드/푸시
                     "Build Backend": {
@@ -64,15 +65,15 @@ pipeline {
                     }
                 }
             }
-        } // <--- 누락되었던 3단계 닫는 중괄호 추가
+        }
 
         // 4단계: Kubernetes에 배포
         stage('Deploy to Kubernetes') {
             steps {
-                // Secret File 타입 자격 증명 사용 (withCredentials([file(...)])로 변경)
+                // Secret File 타입 자격 증명 사용
                 withCredentials([file(credentialsId: env.KUBE_CREDS_ID, variable: 'KUBECONFIG_FILE')]) {
                     
-                    // KUBECONFIG 환경 변수를 Secret File의 임시 경로로 설정합니다.
+                    // KUBECONFIG 환경 변수를 Secret File의 임시 경로로 설정
                     sh "export KUBECONFIG=${KUBECONFIG_FILE}"
 
                     dir('k8s') { // k8s 디렉터리로 이동
@@ -86,7 +87,7 @@ pipeline {
                         sh "kustomize build . | kubectl apply -f -"
                     }
                     
-                    // KUBECONFIG 환경 변수를 withCredentials 블록 외부에서 사용할 수 없도록 해제
+                    // KUBECONFIG 환경 변수 해제
                     sh "unset KUBECONFIG"
                 }
             }
@@ -97,7 +98,6 @@ pipeline {
         // 파이프라인이 끝나면 항상 Docker 로그아웃
         always {
             sh "docker logout ${env.HARBOR_URL}"
-            // Kubeconfig cleanup 명령 제거됨 (withCredentials가 자동 처리)
         }
     }
 }
