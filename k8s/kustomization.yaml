@@ -7,7 +7,7 @@ resources:
 - redis-secret.yaml  # 이 파일은 수동으로 생성해야 합니다.
 - backend-rbac.yaml
 - backend-deployment.yaml
-- frontend-deployment.yaml
+- frontend-deployment.yaml  
 
 # Jenkins가 이 부분을 동적으로 수정하여 이미지 태그를 변경합니다.
 images:
