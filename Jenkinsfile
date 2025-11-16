@@ -34,35 +34,26 @@ pipeline {
             }
         }
 
-        // 3단계: 백엔드/프론트엔드 이미지 병렬 빌드 및 푸시
+        // 3단계: 이미지 빌드 및 푸시 (순차 실행으로 변경)
         stage('Build & Push Images') {
-            steps { // <-- 'parallel' 스텝은 반드시 이 'steps' 블록 내부에 있어야 합니다.
-                
+            steps {
                 // Harbor 로그인 (파이프라인 시작 시 한 번만)
                 withCredentials([usernamePassword(credentialsId: env.HARBOR_CREDS_ID, usernameVariable: 'HARBOR_USER', passwordVariable: 'HARBOR_PASS')]) {
                     sh "docker login ${env.HARBOR_URL} -u ${HARBOR_USER} -p ${HARBOR_PASS}"
                 }
 
-                // 두 작업을 병렬로 실행
-                parallel {
-                    // 병렬 작업 1: 백엔드 빌드/푸시
-                    "Build Backend": {
-                        steps {
-                            dir('backend') { // 'backend' 디렉터리로 이동
-                                sh "docker build -t ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}:${env.IMAGE_TAG} ."
-                                sh "docker push ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}:${env.IMAGE_TAG}"
-                            }
-                        }
-                    },
-                    // 병렬 작업 2: 프론트엔드 빌드/푸시
-                    "Build Frontend": {
-                        steps {
-                            dir('frontend') { // 'frontend' 디렉터리로 이동
-                                sh "docker build -t ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG} ."
-                                sh "docker push ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG}"
-                            }
-                        }
-                    }
+                // 1. 백엔드 빌드/푸시 (먼저 실행)
+                echo "Building Backend Image..."
+                dir('backend') { // 'backend' 디렉터리로 이동
+                    sh "docker build -t ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}:${env.IMAGE_TAG} ."
+                    sh "docker push ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}:${env.IMAGE_TAG}"
+                }
+
+                // 2. 프론트엔드 빌드/푸시 (백엔드 완료 후 실행)
+                echo "Building Frontend Image..."
+                dir('frontend') { // 'frontend' 디렉터리로 이동
+                    sh "docker build -t ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG} ."
+                    sh "docker push ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG}"
                 }
             }
         }
