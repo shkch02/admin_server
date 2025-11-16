@@ -36,7 +36,7 @@ pipeline {
 
         // 3단계: 백엔드/프론트엔드 이미지 병렬 빌드 및 푸시
         stage('Build & Push Images') {
-            steps { // <-- 'parallel' 스텝은 이 'steps' 블록 내부에 있어야 합니다.
+            steps { // <-- 'parallel' 스텝은 반드시 이 'steps' 블록 내부에 있어야 합니다.
                 
                 // Harbor 로그인 (파이프라인 시작 시 한 번만)
                 withCredentials([usernamePassword(credentialsId: env.HARBOR_CREDS_ID, usernameVariable: 'HARBOR_USER', passwordVariable: 'HARBOR_PASS')]) {
