@@ -5,14 +5,14 @@ pipeline {
         // 1. Harbor 및 이미지 정보
         HARBOR_URL       = "shkch.duckdns.org"
         HARBOR_PROJECT   = "webserver"
-        HARBOR_CREDS_ID  = "harbor-creds" // 1단계에서 Jenkins에 등록한 ID
-
+        HARBOR_CREDS_ID  = "harbor-creds"
+        
         // 2. 백엔드/프론트엔드 이미지 이름
         BACKEND_IMAGE_NAME  = "admin-server"
         FRONTEND_IMAGE_NAME = "admin-frontend"
         
         // 3. Kubeconfig 자격 증명 ID
-        KUBE_CREDS_ID = "kubeconfig-creds" // Secret File 타입으로 등록한 ID
+        KUBE_CREDS_ID = "kubeconfig-creds" // Secret File 타입 사용
     }
 
     stages {
@@ -42,17 +42,19 @@ pipeline {
                     sh "docker login ${env.HARBOR_URL} -u ${HARBOR_USER} -p ${HARBOR_PASS}"
                 }
 
-                // 두 작업을 병렬로 실행
+                // 두 작업을 병렬로 실행 (Declarative Pipeline 문법에 맞게 수정됨)
                 parallel {
-                    stage('Build Backend') {
+                    // 병렬 작업 1: 백엔드 빌드/푸시
+                    "Build Backend": {
                         steps {
                             dir('backend') { // 'backend' 디렉터리로 이동
                                 sh "docker build -t ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}:${env.IMAGE_TAG} ."
                                 sh "docker push ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}:${env.IMAGE_TAG}"
                             }
                         }
-                    }
-                    stage('Build Frontend') {
+                    },
+                    // 병렬 작업 2: 프론트엔드 빌드/푸시
+                    "Build Frontend": {
                         steps {
                             dir('frontend') { // 'frontend' 디렉터리로 이동
                                 sh "docker build -t ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG} ."
@@ -62,7 +64,7 @@ pipeline {
                     }
                 }
             }
-        }
+        } // <--- 누락되었던 3단계 닫는 중괄호 추가
 
         // 4단계: Kubernetes에 배포
         stage('Deploy to Kubernetes') {
@@ -71,7 +73,6 @@ pipeline {
                 withCredentials([file(credentialsId: env.KUBE_CREDS_ID, variable: 'KUBECONFIG_FILE')]) {
                     
                     // KUBECONFIG 환경 변수를 Secret File의 임시 경로로 설정합니다.
-                    // kubectl 명령어는 이 경로의 파일을 사용하여 인증합니다.
                     sh "export KUBECONFIG=${KUBECONFIG_FILE}"
 
                     dir('k8s') { // k8s 디렉터리로 이동
@@ -96,8 +97,7 @@ pipeline {
         // 파이프라인이 끝나면 항상 Docker 로그아웃
         always {
             sh "docker logout ${env.HARBOR_URL}"
-            // Secret File 타입은 withCredentials 블록이 자동으로 임시 파일을 정리하므로,
-            // Kubeconfig 삭제 명령은 필요하지 않습니다.
+            // Kubeconfig cleanup 명령 제거됨 (withCredentials가 자동 처리)
         }
     }
 }
