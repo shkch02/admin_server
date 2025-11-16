@@ -109,7 +109,7 @@ npm run dev
 - ✅ API 엔드포인트 기본 구조
 - ✅ 프론트엔드 페이지 (Rules, UpdateRules, Alerts, Syscalls, TestAttack)
 - ✅ 프론트-백엔드 연결
-- ✅ 목업 데이터로 기본 동작 확인 가능
+- ✅ 목업 데이터로 기본 동작 확인 가능  ㅁㄴㅇ 
 
 TODO (실제 구현 필요):
 - ⏳ Kubernetes ConfigMap 실제 읽기/쓰기
