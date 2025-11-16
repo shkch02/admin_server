@@ -95,7 +95,7 @@ pipeline {
     }
 
     post {
-        // 파이프라인이 끝나면 항상 Docker 로그아웃
+        // 파이프라인이 끝나면 항상 Docker 로그아웃 
         always {
             sh "docker logout ${env.HARBOR_URL}"
         }
