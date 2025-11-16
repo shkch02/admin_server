@@ -4,7 +4,7 @@ FROM golang:1.21-alpine AS builder
 WORKDIR /app
 
 # go.mod와 go.sum을 먼저 복사하여 종속성 캐싱 활용
-COPY go.mod go.sum ./
+COPY ../go.mod ../go.sum ./
 RUN go mod download
 
 # 소스 코드 복사
