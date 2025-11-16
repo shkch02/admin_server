@@ -76,7 +76,7 @@ pipeline {
                         sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG}"
 
                         // Kustomize로 빌드된 최종 YAML을 kubectl로 적용
-                        sh "kustomize build . | kubectl apply -f - --insecure-skip-tls-verify=true"
+                        sh "kustomize build . | kubectl apply -f - --insecure-skip-tls-verify=true" //TLS 검증 무시 옵션 추가
                     }
                     
                     // KUBECONFIG 환경 변수 해제
