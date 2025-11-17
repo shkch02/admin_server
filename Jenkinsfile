@@ -60,54 +60,35 @@ pipeline {
         }
 
         // 4단계: Kubernetes에 배포
-        // 4단계: Kubernetes에 배포
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    // 1. SSH 터널 변수 지정
-                    def localPort = 8080 
+                    // 1. SSH 터널 변수 지정 (포트를 8888 등으로 변경)
+                    def localPort = 8888 // <-- 8080 대신 사용되지 않는 포트 사용
                     def remoteK8sTargetIP = "192.168.0.10" 
-                    def remoteK8sPort = 6443
-                    def k8sUser = "server4" 
-                    def sshHost = "sangsu02.iptime.org"
+                    // ... (나머지 변수는 동일)
                     
-                    // 등록한 자격 증명 ID('k8s-master-ssh-key')를 사용하여 sshagent 실행
-                    // 이 블록 안의 모든 쉘 명령은 해당 키를 사용할 수 있습니다.
-                    sshagent(['k8s-master-ssh-key']) { // <--- 이 부분이 추가됨
+                    // sshagent는 그대로 유지
+                    sshagent(['k8s-master-ssh-key']) {
                         
                         // 2. SSH 터널 백그라운드에서 실행
-                        // 'ssh' 명령이 'server4' 사용자의 키를 찾아 인증에 성공할 것입니다.
                         sh "nohup ssh -o StrictHostKeyChecking=no -N -L ${localPort}:${remoteK8sTargetIP}:${remoteK8sPort} ${k8sUser}@${sshHost} &"
                         
                         // 3. 터널이 열릴 때까지 잠시 대기
-                        sleep 5
-
+                        sleep 10 // <-- 안정성을 위해 10초로 늘립니다.
+                        
                         // 4. Kubeconfig 임시 수정 및 배포
                         withCredentials([file(credentialsId: env.KUBE_CREDS_ID, variable: 'KUBECONFIG_FILE')]) {
                             
-                            sh "cp ${KUBECONFIG_FILE} tunnel-config.yaml"
-                            sh "sed -i 's|server:.*|server: https://127.0.0.1:${localPort}|g' tunnel-config.yaml"
-
-                            // Shell 명령어 $ 이스케이프 (이전 오류 해결)
-                            sh "export KUBECONFIG=\$(pwd)/tunnel-config.yaml" 
-
-                            dir('k8s') {
-                                echo "Deploying via SSH tunnel using 127.0.0.1:${localPort}"
-
-                                sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}:${env.IMAGE_TAG}"
-                                sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG}"
-
-                                // kubectl 실행 (터널을 통해 K8s API 서버에 접속)
-                                sh "kustomize build . | kubectl apply -f -"
-                            }
-                            
-                            sh "unset KUBECONFIG"
+                            // *** 여기에서 cp 권한 오류가 났습니다. ***
+                            // 이 코드는 현재 작업 디렉터리에 파일을 생성합니다.
+                            sh "cp ${KUBECONFIG_FILE} tunnel-config.yaml" 
+                            // ... (나머지 코드는 동일)
                         }
-
+                        
                         // 5. 백그라운드 SSH 터널 프로세스 종료
                         sh "pkill -f 'ssh -N -L ${localPort}:${remoteK8sTargetIP}:${remoteK8sPort}'"
-                        
-                    } // <--- 이 부분이 추가됨
+                    }
                 }
             }
         }
