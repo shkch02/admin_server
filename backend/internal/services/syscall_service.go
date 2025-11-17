@@ -1,87 +1,58 @@
 package services
 
 import (
+	// 컨텍스트 추가
 	"admin_server/backend/internal/config"
 	"admin_server/backend/internal/models"
+	"context"
+	"fmt"
 	"log"
+
+	"github.com/redis/go-redis/v9"
 )
+
+const SyscallSetKey = "cluster_callable_syscalls"
 
 // SyscallService handles syscall-related operations
 type SyscallService struct {
-	cfg *config.Config
-	// TODO: Add Redis client when implementing actual Redis integration
-	// redisClient *redis.Client
+	cfg        *config.Config
+	ccslClient *redis.Client // Redis 클라이언트 필드 추가
 }
 
-func NewSyscallService(cfg *config.Config) *SyscallService {
+func NewSyscallService(cfg *config.Config, ccslClient *redis.Client) *SyscallService {
 	return &SyscallService{
-		cfg: cfg,
+		cfg:        cfg,
+		ccslClient: ccslClient,
 	}
 }
 
 // GetCallableSyscalls retrieves all syscalls that the cluster can call
 func (s *SyscallService) GetCallableSyscalls() (*models.CallableSyscallsResponse, error) {
-	// TODO: Implement actual Redis retrieval
-	// For now, return mock data
-	log.Println("Getting callable syscalls from Redis (mock implementation)")
+	log.Println("Getting callable syscalls from CCSL Redis") // 로그 수정
 
-	// Mock data
-	mockSyscalls := []models.Syscall{
-		{
-			Name: "openat",
-			Args: []models.SyscallArg{
-				{Type: "int", Name: "dfd"},
-				{Type: "const char *", Name: "filename"},
-				{Type: "int", Name: "flags"},
-				{Type: "mode_t", Name: "mode"},
-			},
-		},
-		{
-			Name: "read",
-			Args: []models.SyscallArg{
-				{Type: "int", Name: "fd"},
-				{Type: "void *", Name: "buf"},
-				{Type: "size_t", Name: "count"},
-			},
-		},
-		{
-			Name: "write",
-			Args: []models.SyscallArg{
-				{Type: "int", Name: "fd"},
-				{Type: "const void *", Name: "buf"},
-				{Type: "size_t", Name: "count"},
-			},
-		},
-		{
-			Name: "close",
-			Args: []models.SyscallArg{
-				{Type: "int", Name: "fd"},
-			},
-		},
-		{
-			Name: "execve",
-			Args: []models.SyscallArg{
-				{Type: "const char *", Name: "pathname"},
-				{Type: "char *const *", Name: "argv"},
-				{Type: "char *const *", Name: "envp"},
-			},
-		},
+	ctx := context.Background()
+
+	// Redis Set에서 모든 멤버(시스템콜 이름)를 가져옵니다.
+	syscalls, err := s.ccslClient.SMembers(ctx, SyscallSetKey).Result()
+	if err != nil {
+		log.Printf("ERROR: Failed to retrieve syscalls from Redis: %v", err)
+		return nil, fmt.Errorf("failed to retrieve syscalls from Redis: %w", err)
 	}
 
-	// Actual implementation will look like:
-	// redisClient := redis.NewClient(&redis.Options{
-	//     Addr:     fmt.Sprintf("%s:%s", s.cfg.ClusterSyscallsRedisHost, s.cfg.ClusterSyscallsRedisPort),
-	//     Password: s.cfg.ClusterSyscallsRedisPassword,
-	//     DB:       s.cfg.ClusterSyscallsRedisDB,
-	// })
-	// 
-	// keys, err := redisClient.SMembers(context.TODO(), "cluster_syscalls").Result()
-	// for each key, get the syscall details from source of truth Redis
-	// or get directly from the set if stored as JSON
+	// Redis에서 가져온 문자열 목록을 응답 모델로 변환합니다.
+	resultSyscalls := make([]models.Syscall, len(syscalls))
+	for i, name := range syscalls {
+		resultSyscalls[i] = models.Syscall{
+			Name: name,
+			// 인자와 설명은 'Source of Truth' Redis에서 가져오거나
+			// 정적 분석 단계에서 채워져야 하지만, 현재는 TBD로 처리합니다.
+			Args:        "TBD",
+			Description: "TBD",
+		}
+	}
 
 	return &models.CallableSyscallsResponse{
-		TotalCount: len(mockSyscalls),
-		Syscalls:   mockSyscalls,
+		TotalCount: len(resultSyscalls),
+		Syscalls:   resultSyscalls,
 	}, nil
 }
-

@@ -8,7 +8,11 @@ import (
 	"admin_server/backend/internal/handlers"
 	"admin_server/backend/internal/services"
 
+	// 컨텍스트 추가
+	"context" // 컨텍스트 추가
+
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -29,6 +33,28 @@ func main() {
 		log.Fatalf("Failed to create kubernetes clientset: %v", err)
 	}
 	// --- [추가 끝] ---
+
+	// Initialize CCSL Redis Client (추가)
+	ccslRedisClient := redis.NewClient(&redis.Options{
+		Addr:     cfg.CCSLRedisAddr,
+		Password: cfg.CCSLRedisPassword,
+		DB:       0,
+	})
+
+	// Check Redis connection
+	ctx := context.Background()
+	_, err := ccslRedisClient.Ping(ctx).Result()
+	if err != nil {
+		log.Fatalf("Failed to connect to CCSL Redis at %s: %v", cfg.CCSLRedisAddr, err)
+	}
+	log.Println("Successfully connected to CCSL Redis")
+
+	// Initialize services
+	ruleService := services.NewRuleService(cfg, clientset)
+	// SyscallService에 Redis 클라이언트 주입 (수정)
+	syscallService := services.NewSyscallService(cfg, ccslRedisClient)
+	alertService := services.NewAlertService(cfg)
+	testService := services.NewTestService(cfg)
 
 	// Initialize services
 	ruleService := services.NewRuleService(cfg, clientset)

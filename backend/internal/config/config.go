@@ -11,17 +11,10 @@ type Config struct {
 	ConfigMapName  string
 	RuleYamlPath   string
 
-	// Redis configuration
-	RedisHost     string
-	RedisPort     string
-	RedisPassword string
-	RedisDB       int
 
-	// Cluster syscalls Redis
-	ClusterSyscallsRedisHost     string
-	ClusterSyscallsRedisPort     string
-	ClusterSyscallsRedisPassword string
-	ClusterSyscallsRedisDB       int
+	// CCSL Redis 설정 (추가)
+	CCSLRedisAddr string
+	CCSLRedisPassword string
 }
 
 func Load() *Config {
@@ -31,15 +24,8 @@ func Load() *Config {
 		ConfigMapName:  getEnv("CONFIG_MAP_NAME", "rule-yaml"),
 		RuleYamlPath:   getEnv("RULE_YAML_FILE_PATH", "/etc/config/rule.yaml"),
 
-		RedisHost:     getEnv("REDIS_HOST", "localhost"),
-		RedisPort:     getEnv("REDIS_PORT", "6379"),
-		RedisPassword: getEnv("REDIS_PASSWORD", ""),
-		RedisDB:       0,
-
-		ClusterSyscallsRedisHost:     getEnv("CLUSTER_SYSCALLS_REDIS_HOST", "localhost"),
-		ClusterSyscallsRedisPort:     getEnv("CLUSTER_SYSCALLS_REDIS_PORT", "6379"),
-		ClusterSyscallsRedisPassword: getEnv("CLUSTER_SYSCALLS_REDIS_PASSWORD", ""),
-		ClusterSyscallsRedisDB:       1,
+		CCSLRedisAddr: getEnv("CCSL_REDIS_ADDR", "redis-ccsl-svc:6379"),
+		CCSLRedisPassword: getEnv("CCSL_REDIS_PASSWORD", ""),		,
 	}
 }
 

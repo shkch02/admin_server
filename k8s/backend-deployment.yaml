@@ -26,14 +26,13 @@ spec:
         - containerPort: 8080
         
         env:
-          - name: REDIS_HOST
-            value: "redis-ccsl"
-          - name: REDIS_PORT
-            value: "6379" 
-          - name: CLUSTER_SYSCALLS_REDIS_HOST
-            value: "your-syscall-redis-host.default.svc.cluster.local"
-          - name: CLUSTER_SYSCALLS_REDIS_PORT
-            value: "6379"
+          - name: CCSL_REDIS_ADDR
+            value: "redis-ccsl-svc:6379" # CCSL Service DNS 사용
+          - name: CCSL_REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: redis-ccsl-secret # redis_ccsl.yaml에 정의된 Secret
+                key: redis-password    # Secret 내부 Key 이름
             
           # ConfigMap 이름을 환경 변수로 주입
           - name: CONFIG_MAP_NAME
