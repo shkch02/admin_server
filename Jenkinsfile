@@ -2,23 +2,22 @@ pipeline {
     agent any
 
     environment {
+        // 1. Harbor 및 이미지 정보
         HARBOR_URL       = "shkch.duckdns.org"
         HARBOR_PROJECT   = "webserver"
         HARBOR_CREDS_ID  = "harbor-creds"
         BACKEND_IMAGE_NAME  = "admin-server"
         FRONTEND_IMAGE_NAME = "admin-frontend"
         KUBE_CREDS_ID = "kubeconfig-creds"
+        
+        // 2. SSH 터널링/K8s 접속 정보를 환경 변수로 이동 (def 제거)
+        K8S_USER = "server4" // 이제 env.K8S_USER로 접근합니다.
+        SSH_HOST = "sangsu02.iptime.org"
+        K8S_TARGET_IP = "192.168.0.10" 
+        K8S_PORT = "6443" // 포트는 문자열로 두어도 무방합니다.
     }
     
-    // SSH 터널링에 필요한 변수들을 Pipeline 레벨에서 정의 (가장 안전)
-    def k8sUser = "server4"
-    def sshHost = "sangsu02.iptime.org"
-    def remoteK8sTargetIP = "192.168.0.10"
-    def remoteK8sPort = 6443
-
     stages {
-        // ... (Stage 1, Stage 2, Stage 3은 이전과 동일)
-
         stage('Checkout') {
             steps {
                 checkout scm
@@ -37,7 +36,6 @@ pipeline {
         stage('Build & Push Images') {
             steps {
                 withCredentials([usernamePassword(credentialsId: env.HARBOR_CREDS_ID, usernameVariable: 'HARBOR_USER', passwordVariable: 'HARBOR_PASS')]) {
-                    // 민감 정보를 숨기기 위해 작은 따옴표로 감싸는 것이 좋습니다.
                     sh "docker login ${env.HARBOR_URL} -u ${HARBOR_USER} -p '${HARBOR_PASS}'" 
                 }
 
@@ -58,44 +56,44 @@ pipeline {
         // 4단계: Kubernetes에 배포
         stage('Deploy to Kubernetes') {
             steps {
-                // 이 단계에서는 'script' 블록을 제거하고, 'steps' 블록 안에 바로 sshagent를 사용합니다.
-                // Groovy 변수를 Pipeline 레벨로 옮겼으므로, 변수 범위 문제가 발생하지 않습니다.
-                
-                // 임시 포트 지정 (Pipeline 레벨 변수와 별도로 선언)
-                def localPort = 8888 
-
-                // SSH Agent를 사용하여 키 주입
-                sshagent(['k8s-master-ssh-key']) {
+                script { // <--- 이 'script' 블록은 'steps' 내부의 복잡한 로직을 감싸는 역할만 합니다.
                     
-                    // 1. SSH 터널 백그라운드에서 실행
-                    sh "nohup ssh -o StrictHostKeyChecking=no -N -L ${localPort}:${remoteK8sTargetIP}:${remoteK8sPort} ${k8sUser}@${sshHost} &"
-                    
-                    // 2. 터널이 열릴 때까지 잠시 대기
-                    sleep 10 
+                    // 1. SSH 터널에 사용할 로컬 포트를 'script' 내부에서 정의 (def 사용)
+                    def localPort = 8888 
 
-                    // 3. Kubeconfig 임시 수정 및 배포
-                    withCredentials([file(credentialsId: env.KUBE_CREDS_ID, variable: 'KUBECONFIG_FILE')]) {
+                    // SSH Agent를 사용하여 키 주입
+                    sshagent(['k8s-master-ssh-key']) {
                         
-                        // KUBECONFIG 파일 복사 및 API 서버 주소를 127.0.0.1:8888으로 변경
-                        sh "cp ${KUBECONFIG_FILE} tunnel-config.yaml"
-                        sh "sed -i 's|server:.*|server: https://127.0.0.1:${localPort}|g' tunnel-config.yaml"
+                        // 2. SSH 터널 백그라운드에서 실행 (환경 변수 사용)
+                        sh "nohup ssh -o StrictHostKeyChecking=no -N -L ${localPort}:${env.K8S_TARGET_IP}:${env.K8S_PORT} ${env.K8S_USER}@${env.SSH_HOST} &"
+                        
+                        // 3. 터널이 열릴 때까지 잠시 대기
+                        sleep 10 
 
-                        sh "export KUBECONFIG=\$(pwd)/tunnel-config.yaml" 
+                        // 4. Kubeconfig 임시 수정 및 배포
+                        withCredentials([file(credentialsId: env.KUBE_CREDS_ID, variable: 'KUBECONFIG_FILE')]) {
+                            
+                            // KUBECONFIG 파일 복사 및 API 서버 주소를 127.0.0.1:8888으로 변경
+                            sh "cp ${KUBECONFIG_FILE} tunnel-config.yaml"
+                            sh "sed -i 's|server:.*|server: https://127.0.0.1:${localPort}|g' tunnel-config.yaml"
 
-                        dir('k8s') {
-                            echo "Deploying via SSH tunnel using 127.0.0.1:${localPort}"
+                            sh "export KUBECONFIG=\$(pwd)/tunnel-config.yaml" 
 
-                            sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}:${env.IMAGE_TAG}"
-                            sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG}"
+                            dir('k8s') {
+                                echo "Deploying via SSH tunnel using 127.0.0.1:${localPort}"
 
-                            sh "kustomize build . | kubectl apply -f -"
+                                sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}:${env.IMAGE_TAG}"
+                                sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG}"
+
+                                sh "kustomize build . | kubectl apply -f -"
+                            }
+                            
+                            sh "unset KUBECONFIG"
                         }
-                        
-                        sh "unset KUBECONFIG"
-                    }
 
-                    // 4. 백그라운드 SSH 터널 프로세스 종료
-                    sh "pkill -f 'ssh -N -L ${localPort}:${remoteK8sTargetIP}:${remoteK8sPort}'"
+                        // 5. 백그라운드 SSH 터널 프로세스 종료
+                        sh "pkill -f 'ssh -N -L ${localPort}:${env.K8S_TARGET_IP}:${env.K8S_PORT}'"
+                    }
                 }
             }
         }
