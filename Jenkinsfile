@@ -91,7 +91,7 @@ pipeline {
                             sh "unset KUBECONFIG"
                         }
 
-                        // 5. 백그라운드 SSH 터널 프로세스 종료
+                        // 5. 백그라운드 SSH 터널 프로세스 종료함
                         sh "pkill -f 'ssh -N -L ${localPort}:${env.K8S_TARGET_IP}:${env.K8S_PORT}'"
                     }
                 }
