@@ -56,48 +56,48 @@ pipeline {
 // ... (이전 스테이지 생략)
 
 /// 4단계: Kubernetes에 배포
+        // 4단계: Deploy to Kubernetes
 stage('Deploy to Kubernetes') {
     steps {
         script {
             def localPort = 8888 
-            
-            // 1. SSH 터널 백그라운드에서 실행하고 PID를 파일에 저장합니다.
-            sh "nohup ssh -o StrictHostKeyChecking=no -N -L ${localPort}:${env.K8S_TARGET_IP}:${env.K8S_PORT} ${env.K8S_USER}@${env.SSH_HOST} > /dev/null 2>&1 & echo \$! > tunnel.pid"
-            
-            // PID 파일을 읽어 변수에 저장
-            def tunnelPid = readFile('tunnel.pid').trim() 
-            sleep 10 
+            def KUBECONFIG_PATH // Kubeconfig 경로를 저장할 변수
 
+            // 1. SSH 터널 시작과 인증서 주입을 단일 블록에서 처리
             sshagent(['k8s-master-ssh-key']) {
+                
+                // SSH 터널 백그라운드에서 실행하고 PID를 파일에 저장
+                // **nohup은 sshagent 블록 안에서 실행되어 키를 사용할 수 있습니다.**
+                sh "nohup ssh -o StrictHostKeyChecking=no -N -L ${localPort}:${env.K8S_TARGET_IP}:${env.K8S_PORT} ${env.K8S_USER}@${env.SSH_HOST} > /dev/null 2>&1 & echo \$! > tunnel.pid"
+                
+                def tunnelPid = readFile('tunnel.pid').trim() // PID 파일 읽기
+                sleep 10 // 터널 활성화 대기
+
+                // 2. Kubeconfig 임시 수정 및 배포
                 withCredentials([file(credentialsId: env.KUBE_CREDS_ID, variable: 'KUBECONFIG_FILE')]) {
                     
                     sh "sed -i 's|server:.*|server: https://127.0.0.1:${localPort}|g' ${KUBECONFIG_FILE} || true" 
-                    def KUBECONFIG_PATH = env.KUBECONFIG_FILE
+                    KUBECONFIG_PATH = env.KUBECONFIG_FILE
                     
                     dir('k8s') {
-                        // ... (Kustomize 및 kubectl apply 명령어)
+                        // Kustomize 태그 업데이트가 이 단계에서 정확히 실행됩니다.
                         sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}:${env.IMAGE_TAG}"
                         sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG}"
 
                         sh "kustomize build . > deployment.yaml"
 
-                        // 디버깅을 위한 Kustomize 결과물 출력
-                        sh "cat deployment.yaml" // <-- 이 코드를 추가하여 Kustomize 결과물 확인
-                        // **SUCCESS 종료 보장**
+                        // 3. kubectl apply 실행
                         sh "KUBECONFIG=${KUBECONFIG_PATH} kubectl apply -f deployment.yaml || true" 
-
-                        // *****************************************************************
-                        // *** 이 부분이 추가됩니다: Deployment 롤아웃 강제 재시작 ***
-                        echo "Forcing frontend deployment rollout restart..."
-                        sh "KUBECONFIG=${KUBECONFIG_PATH} kubectl rollout restart deployment admin-server-frontend -n default || true"
-                        // *****************************************************************
+                        
+                        // 4. 강제 롤아웃 재시작 (변경 사항 즉시 반영)
+                        sh "KUBECONFIG=${KUBECONFIG_PATH} kubectl rollout restart deployment admin-server-frontend -n default || true" 
                     }
                 }
+                
+                // 5. 백그라운드 SSH 터널 프로세스 종료 (kill 명령은 sshagent 블록 내부에서 실행 가능)
+                sh "kill ${tunnelPid} || true" 
+                sh "rm -f tunnel.pid || true"
             }
-
-            // 5. 백그라운드 SSH 터널 프로세스 종료 (PID를 이용한 안전한 kill)
-            sh "kill ${tunnelPid} || true" 
-            sh "rm -f tunnel.pid || true" // 임시 파일 정리
         }
     }
 }
