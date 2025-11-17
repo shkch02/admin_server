@@ -53,41 +53,50 @@ pipeline {
             }
         }
 
-        // 4단계: Kubernetes에 배포
-        stage('Deploy to Kubernetes') {
-            steps {
-                script {
-                    // ... (SSH 변수 선언)
-                    def localPort = 8888 
+// ... (이전 스테이지 생략)
 
-                    sshagent(['k8s-master-ssh-key']) {
-                        
-                        // 2. SSH 터널 백그라운드에서 실행
-                        sh "nohup ssh -o StrictHostKeyChecking=no -N -L ${localPort}:${env.K8S_TARGET_IP}:${env.K8S_PORT} ${env.K8S_USER}@${env.SSH_HOST} &"
-                        sleep 10 
+// 4단계: Kubernetes에 배포
+stage('Deploy to Kubernetes') {
+    steps {
+        script {
+            // ... (SSH 변수 선언)
+            def localPort = 8888 
 
-                        // 3. Kubeconfig 임시 수정 및 배포
-                        withCredentials([file(credentialsId: env.KUBE_CREDS_ID, variable: 'KUBECONFIG_FILE')]) {
-                            
-                            // *** Kubeconfig 파일 내의 API 주소를 127.0.0.1로 변경합니다. ***
-                            sh "sed -i 's|server:.*|server: https://127.0.0.1:${localPort}|g' ${KUBECONFIG_FILE}"
+            sshagent(['k8s-master-ssh-key']) {
+                
+                // 2. SSH 터널 백그라운드에서 실행
+                sh "nohup ssh -o StrictHostKeyChecking=no -N -L ${localPort}:${env.K8S_TARGET_IP}:${env.K8S_PORT} ${env.K8S_USER}@${env.SSH_HOST} &"
+                sleep 10 
 
-                            sh "export KUBECONFIG=${KUBECONFIG_FILE}" 
-                            
-                            dir('k8s') {
-                                // ... kubectl apply 명령어 실행 ...
-                                sh "kustomize build . | kubectl apply -f -"
-                            }
-                            
-                            sh "unset KUBECONFIG"
-                        }
+                // 3. Kubeconfig 임시 수정 및 배포
+                withCredentials([file(credentialsId: env.KUBE_CREDS_ID, variable: 'KUBECONFIG_FILE')]) {
+                    
+                    // *** Kubeconfig 파일 내의 API 주소를 127.0.0.1로 변경합니다. ***
+                    sh "sed -i 's|server:.*|server: https://127.0.0.1:${localPort}|g' ${KUBECONFIG_FILE}"
 
-                        // 5. 백그라운드 SSH 터널 프로세스 종료
-                        sh "pkill -f 'ssh -N -L ${localPort}:${env.K8S_TARGET_IP}:${env.K8S_PORT}'"
+                    sh "export KUBECONFIG=${KUBECONFIG_FILE}" 
+                    
+                    dir('k8s') {
+                        // ------------------------------------------------------------------------
+                        // *** (수정된 디버깅 코드 시작) ***
+                        // Kustomize 빌드 결과를 파일로 저장
+                        sh "kustomize build . > deployment.yaml"
+                        // -v=8 옵션으로 kubectl 실행: API 서버와 주고받는 상세 HTTP 로그를 출력합니다.
+                        sh "kubectl apply -f deployment.yaml -v=8"
+                        // *** (수정된 디버깅 코드 끝) ***
+                        // ------------------------------------------------------------------------
                     }
+                    
+                    sh "unset KUBECONFIG"
                 }
+
+                // 5. 백그라운드 SSH 터널 프로세스 종료
+                sh "pkill -f 'ssh -N -L ${localPort}:${env.K8S_TARGET_IP}:${env.K8S_PORT}'"
             }
         }
+    }
+}
+// ... (이후 post 액션 생략)
     }
 
     post {
