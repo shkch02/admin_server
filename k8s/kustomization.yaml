@@ -3,7 +3,7 @@ kind: Kustomization
 
 # k8s 폴더 내의 모든 YAML 파일을 리소스로 포함
 resources:
-- rule-configmap.yaml
+- #rule-configmap.yaml
 - redis-secret.yaml  # 이 파일은 수동으로 생성해야 합니다.
 - backend-rbac.yaml
 - backend-deployment.yaml
