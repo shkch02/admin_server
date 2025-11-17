@@ -132,3 +132,8 @@ pv 마운트해서 각종 다이어그램도 볼수있는 기능 추가하면 �
 ### 백엔드
  go get k8s.io/client-go@v0.28.0
 go get k8s.io/apimachinery@v0.28.0
+
+
+## TODO
+
+클러스터에 있는 rule-configmap.yaml을 참조하는게 아니라 이 프로젝트 디렉토리에 있는 rule-configmap을 바라보는거같은데,,확인 필요 
