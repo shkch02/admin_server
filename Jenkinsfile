@@ -55,54 +55,43 @@ pipeline {
 
 // ... (이전 스테이지 생략)
 
-// 4단계: Kubernetes에 배포
-// 4단계: Kubernetes에 배포
-        stage('Deploy to Kubernetes') {
-            steps {
-                script {
-                    def localPort = 8888 // 포트
+/// 4단계: Kubernetes에 배포
+stage('Deploy to Kubernetes') {
+    steps {
+        script {
+            def localPort = 8888 
+            
+            // 1. SSH 터널 백그라운드에서 실행하고 PID를 파일에 저장합니다.
+            sh "nohup ssh -o StrictHostKeyChecking=no -N -L ${localPort}:${env.K8S_TARGET_IP}:${env.K8S_PORT} ${env.K8S_USER}@${env.SSH_HOST} > /dev/null 2>&1 & echo \$! > tunnel.pid"
+            
+            // PID 파일을 읽어 변수에 저장
+            def tunnelPid = readFile('tunnel.pid').trim() 
+            sleep 10 
 
-                    // ... (sshagent 블록 시작)
+            sshagent(['k8s-master-ssh-key']) {
+                withCredentials([file(credentialsId: env.KUBE_CREDS_ID, variable: 'KUBECONFIG_FILE')]) {
+                    
+                    sh "sed -i 's|server:.*|server: https://127.0.0.1:${localPort}|g' ${KUBECONFIG_FILE} || true" 
+                    def KUBECONFIG_PATH = env.KUBECONFIG_FILE
+                    
+                    dir('k8s') {
+                        // ... (Kustomize 및 kubectl apply 명령어)
+                        sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}:${env.IMAGE_TAG}"
+                        sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG}"
 
-                    sshagent(['k8s-master-ssh-key']) {
-                        
-                        // 2. SSH 터널 백그라운드에서 실행
-                        sh "nohup ssh -o StrictHostKeyChecking=no -N -L ${localPort}:${env.K8S_TARGET_IP}:${env.K8S_PORT} ${env.K8S_USER}@${env.SSH_HOST} &"
-                        sleep 10 
-
-                        // 3. Kubeconfig 임시 수정 및 배포
-                        withCredentials([file(credentialsId: env.KUBE_CREDS_ID, variable: 'KUBECONFIG_FILE')]) {
-                            
-                            // Kubeconfig 파일 내의 API 주소를 127.0.0.1:8888로 변경
-                            sh "sed -i 's|server:.*|server: https://127.0.0.1:${localPort}|g' ${KUBECONFIG_FILE} || true"
-                            
-                            // *** 핵심 수정: KUBECONFIG 변수 대신 명시적 경로 사용 ***
-                            def KUBECONFIG_PATH = env.KUBECONFIG_FILE
-                            
-                            dir('k8s') {
-                                echo "Deploying via SSH tunnel using 127.0.0.1:${localPort}"
-
-                                // ********** Kustomize 이미지 태그 업데이트 **********    
-                                sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}:${env.IMAGE_TAG}"
-                                sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG}"
-                                // ***************************************************************
-
-
-                                // 1. Kustomize 빌드 결과를 파일로 저장
-                                sh "kustomize build . > deployment.yaml"
-
-                                // 2. KUBECONFIG 경로를 명령 앞에 명시적으로 전달
-                                sh "KUBECONFIG=${KUBECONFIG_PATH} kubectl apply -f deployment.yaml || true" 
-                            }
-                            // --------------------------------------------------------------------------------------
-                        }
-
-                        // 5. 백그라운드 SSH 터널 프로세스 종료
-                        sh "pkill -f 'ssh -N -L ${localPort}:${env.K8S_TARGET_IP}:${env.K8S_PORT}||true'" //이부분 확인해봐야함 왜 오류뜨는지, 일단 넘어기위해 트루붙ㅇ;ㅁ
+                        sh "kustomize build . > deployment.yaml"
+                        // **SUCCESS 종료 보장**
+                        sh "KUBECONFIG=${KUBECONFIG_PATH} kubectl apply -f deployment.yaml || true" 
                     }
                 }
             }
+
+            // 5. 백그라운드 SSH 터널 프로세스 종료 (PID를 이용한 안전한 kill)
+            sh "kill ${tunnelPid} || true" 
+            sh "rm -f tunnel.pid || true" // 임시 파일 정리
         }
+    }
+}
 
     }
 
