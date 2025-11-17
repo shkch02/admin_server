@@ -5,7 +5,6 @@ import (
 	"admin_server/backend/internal/models"
 	"fmt"
 	"log"
-	"os"
 
 	"context" // <-- [추가]
 
@@ -29,36 +28,33 @@ func NewRuleService(cfg *config.Config, clientset kubernetes.Interface) *RuleSer
 	}
 }
 
-// GetRules retrieves the current rules from ConfigMap
+// GetRules retrieves the current rules directly from ConfigMap via K8s API
 func (s *RuleService) GetRules() (*models.RuleSet, error) {
-	// TODO: Implement actual K8s ConfigMap retrieval
-	// For now, return mock data
-	log.Println("Getting rules from mounted ConfigMap file")
+	// [수정] K8s API를 통해 ConfigMap 데이터를 직접 조회하여 즉각적인 반영을 보장합니다.
+	log.Println("Getting rules from Kubernetes ConfigMap via API")
 
-	// Mock data matching the example in requirements
-
-	yamlData, err := os.ReadFile(s.cfg.RuleYamlPath)
+	// 1. K8s API를 통해 ConfigMap의 현재 상태를 가져오기 (파일 읽기 로직 대체)
+	configMap, err := s.clientset.CoreV1().ConfigMaps(s.cfg.Namespace).Get(context.TODO(), s.cfg.ConfigMapName, metav1.GetOptions{})
 	if err != nil {
-		log.Printf("Failed to read rule file (%s): %v", s.cfg.RuleYamlPath, err)
-		return nil, fmt.Errorf("failed to read rule file: %w", err)
+		log.Printf("Failed to get ConfigMap %s via API: %v", s.cfg.ConfigMapName, err)
+		return nil, fmt.Errorf("failed to get ConfigMap via K8s API: %w", err)
 	}
 
+	// 2. ConfigMap의 Data 필드에서 'rule.yaml' 키의 값 추출
+	yamlContent, ok := configMap.Data["rule.yaml"]
+	if !ok {
+		return nil, fmt.Errorf("ConfigMap %s does not contain 'rule.yaml' key", s.cfg.ConfigMapName)
+	}
+
+	// 3. YAML 내용을 모델로 언마샬
 	var ruleSet models.RuleSet
-	err = yaml.Unmarshal(yamlData, &ruleSet)
+	err = yaml.Unmarshal([]byte(yamlContent), &ruleSet)
 	if err != nil {
-		log.Printf("Failed to unmarshal rule YAML: %v", err)
+		log.Printf("Failed to unmarshal rule YAML from ConfigMap: %v", err)
 		return nil, fmt.Errorf("failed to unmarshal rule YAML: %w", err)
 	}
 
 	return &ruleSet, nil
-
-	// Actual implementation will look like:
-	// clientset, err := kubernetes.NewForConfig(k8sConfig)
-	// configMap, err := clientset.CoreV1().ConfigMaps(s.cfg.Namespace).Get(context.TODO(), s.cfg.ConfigMapName, metav1.GetOptions{})
-	// yamlContent := configMap.Data["rule.yaml"]
-	// var ruleSet models.RuleSet
-	// err = yaml.Unmarshal([]byte(yamlContent), &ruleSet)
-	// return &ruleSet, nil
 }
 
 // UpdateRules updates the rules in ConfigMap
