@@ -90,6 +90,7 @@ stage('Deploy to Kubernetes') {
                         sh "KUBECONFIG=${KUBECONFIG_PATH} kubectl apply -f deployment.yaml || true" 
                         
                         // 4. 강제 롤아웃 재시작 (변경 사항 즉시 반영)
+                        sh "KUBECONFIG=${KUBECONFIG_PATH} kubectl rollout restart deployment admin-server-backend -n default || true"
                         sh "KUBECONFIG=${KUBECONFIG_PATH} kubectl rollout restart deployment admin-server-frontend -n default || true" 
                     }
                 }
