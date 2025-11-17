@@ -74,7 +74,7 @@ pipeline {
                         withCredentials([file(credentialsId: env.KUBE_CREDS_ID, variable: 'KUBECONFIG_FILE')]) {
                             
                             // Kubeconfig 파일 내의 API 주소를 127.0.0.1:8888로 변경
-                            sh "sed -i 's|server:.*|server: https://127.0.0.1:${localPort}|g' ${KUBECONFIG_FILE}"
+                            sh "sed -i 's|server:.*|server: https://127.0.0.1:${localPort}|g' ${KUBECONFIG_FILE} || true"
                             
                             // *** 핵심 수정: KUBECONFIG 변수 대신 명시적 경로 사용 ***
                             def KUBECONFIG_PATH = env.KUBECONFIG_FILE
