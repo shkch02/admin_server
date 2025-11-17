@@ -57,9 +57,8 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    def localPort = 8888 // 포트 충돌 방지용
-
-                    // ... (변수 선언 및 sshagent 블록 시작)
+                    // ... (SSH 변수 선언)
+                    def localPort = 8888 
 
                     sshagent(['k8s-master-ssh-key']) {
                         
@@ -70,21 +69,13 @@ pipeline {
                         // 3. Kubeconfig 임시 수정 및 배포
                         withCredentials([file(credentialsId: env.KUBE_CREDS_ID, variable: 'KUBECONFIG_FILE')]) {
                             
-                            // *** 핵심 수정 ***
-                            // 1. cp 명령어 제거
-                            // 2. withCredentials가 생성한 임시 파일($KUBECONFIG_FILE)을 'sed'로 바로 수정
-                            // (주의: sed는 복사본을 만드는 대신 파일을 직접 수정함)
+                            // *** Kubeconfig 파일 내의 API 주소를 127.0.0.1로 변경합니다. ***
                             sh "sed -i 's|server:.*|server: https://127.0.0.1:${localPort}|g' ${KUBECONFIG_FILE}"
 
-                            // 4. KUBECONFIG 환경 변수를 이 임시 파일 경로로 설정
                             sh "export KUBECONFIG=${KUBECONFIG_FILE}" 
-
+                            
                             dir('k8s') {
-                                echo "Deploying via SSH tunnel using 127.0.0.1:${localPort}"
-
-                                sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}:${env.IMAGE_TAG}"
-                                sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG}"
-
+                                // ... kubectl apply 명령어 실행 ...
                                 sh "kustomize build . | kubectl apply -f -"
                             }
                             
