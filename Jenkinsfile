@@ -82,6 +82,12 @@ pipeline {
                             dir('k8s') {
                                 echo "Deploying via SSH tunnel using 127.0.0.1:${localPort}"
 
+                                // ********** Kustomize 이미지 태그 업데이트 **********    
+                                sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}:${env.IMAGE_TAG}"
+                                sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG}"
+                                // ***************************************************************
+
+
                                 // 1. Kustomize 빌드 결과를 파일로 저장
                                 sh "kustomize build . > deployment.yaml"
 
