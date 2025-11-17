@@ -62,25 +62,26 @@ pipeline {
         // 4단계: Kubernetes에 배포
         stage('Deploy to Kubernetes') {
             steps {
-                // Secret File 타입 자격 증명 사용
-                withCredentials([file(credentialsId: env.KUBE_CREDS_ID, variable: 'KUBECONFIG_FILE')]) {
-                    
-                    // KUBECONFIG 환경 변수를 Secret File의 임시 경로로 설정
-                    sh "export KUBECONFIG=${KUBECONFIG_FILE}"
+                withCredentials([string(credentialsId: 'saToken', variable: 'K8S_TOKEN')]) {
 
-                    dir('k8s') { // k8s 디렉터리로 이동
+                    dir('k8s') {
                         echo "Deploying with image tag: ${env.IMAGE_TAG}"
 
-                        // Kustomize를 사용해 이미지 태그 동적 변경
-                        sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}:${env.IMAGE_TAG}"
-                        sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG}"
+                        // 1) 이미지 태그 업데이트
+                        sh """
+                            kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}:${env.IMAGE_TAG}
+                            kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG}
+                        """
 
-                        // Kustomize로 빌드된 최종 YAML을 kubectl로 적용
-                        sh "kustomize build . | kubectl apply -f - --insecure-skip-tls-verify=true" //TLS 검증 무시 옵션 추가
+                        // 2) Token 기반 kubectl 실행
+                        sh """
+                            kustomize build . | kubectl \
+                                --server=https://192.168.0.10:6443 \
+                                --insecure-skip-tls-verify=true \
+                                --token=${K8S_TOKEN} \
+                                apply -f -
+                        """
                     }
-                    
-                    // KUBECONFIG 환경 변수 해제
-                    sh "unset KUBECONFIG"
                 }
             }
         }
