@@ -213,4 +213,10 @@ code {
 }
 
 
-
+version-info {
+  text-align: center; /* 중앙 정렬 */
+  font-size: 0.75rem; /* 작게 (12px) */
+  color: #7f8c8d; /* 회색 */
+  margin-top: 30px; /* 위쪽 컨텐츠와의 간격 확보 */
+  padding-bottom: 10px; /* 페이지 하단에 약간의 여백 확보 */
+}
