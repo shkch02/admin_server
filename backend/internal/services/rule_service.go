@@ -62,38 +62,38 @@ func (s *RuleService) GetRules() (*models.RuleSet, error) {
 }
 
 // UpdateRules updates the rules in ConfigMap
-// UpdateRules updates the rules in ConfigMap
 func (s *RuleService) UpdateRules(ruleSet *models.RuleSet) (*models.UpdateRulesResponse, error) {
 
-	// Convert to YAML
+	// 1. Convert to YAML
 	yamlData, err := yaml.Marshal(ruleSet)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal rules to YAML: %w", err)
 	}
 
-	log.Printf("YAML to be written:\n%s", string(yamlData))
+	log.Printf("Updating ConfigMap '%s' in namespace '%s'", s.cfg.ConfigMapName, s.cfg.Namespace)
 
-	// 1. K8s API로 ConfigMap 가져오기
+	// 2. ConfigMap의 현재 상태를 K8s API에서 가져오기
+	// s.clientset을 사용하여 RuleService에 주입된 클라이언트에 접근합니다.
 	configMap, err := s.clientset.CoreV1().ConfigMaps(s.cfg.Namespace).Get(context.TODO(), s.cfg.ConfigMapName, metav1.GetOptions{})
 
-	// 2. [필수] Get 직후 오류 처리
+	// 3. ConfigMap Get 실패 시 처리
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ConfigMap %s: %w", s.cfg.ConfigMapName, err)
 	}
 
-	// 3. 데이터 업데이트 (중복 코드 제거)
+	// 4. 데이터 업데이트
 	configMap.Data["rule.yaml"] = string(yamlData)
 
-	// 4. K8s API로 ConfigMap 업데이트
+	// 5. K8s API로 ConfigMap 업데이트
 	_, err = s.clientset.CoreV1().ConfigMaps(s.cfg.Namespace).Update(context.TODO(), configMap, metav1.UpdateOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to update ConfigMap: %w", err)
+		// K8s API 호출 실패 시 오류 메시지 반환
+		return nil, fmt.Errorf("failed to update ConfigMap via K8s API: %w", err)
 	}
 
 	// TODO: Trigger rule engine and eBPF generator to reload rules
-	// ... (이후 작업)
+	// ... (이후 룰 엔진 리로드 로직)
 
-	// Increment version
 	newVersion := ruleSet.RulesetVersion
 
 	return &models.UpdateRulesResponse{

@@ -39,4 +39,3 @@ func (h *TestHandler) TriggerTest(c *gin.Context) {
 
 	c.JSON(http.StatusAccepted, response)
 }
-

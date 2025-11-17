@@ -47,7 +47,7 @@ function App() {
           <Route path="/syscalls" element={<Syscalls />} />
           <Route path="/test-attack" element={<TestAttack />} />
         </Routes>
-        <p className="version-info">버전 (v1.1.2)</p>
+        <p className="version-info">버전 (v1.1.3)</p>
       </div>
     </Router>
   )
