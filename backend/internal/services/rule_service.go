@@ -87,7 +87,8 @@ func (s *RuleService) UpdateRules(ruleSet *models.RuleSet) (*models.UpdateRulesR
 	// 5. K8s API로 ConfigMap 업데이트
 	_, err = s.clientset.CoreV1().ConfigMaps(s.cfg.Namespace).Update(context.TODO(), configMap, metav1.UpdateOptions{})
 	if err != nil {
-		// K8s API 호출 실패 시 오류 메시지 반환
+		// API 호출 실패 시 로그를 남김 (이 로그가 콘솔에 찍히는지 확인해야 함)
+		log.Printf("ERROR: Failed to update ConfigMap via K8s API: %v", err)
 		return nil, fmt.Errorf("failed to update ConfigMap via K8s API: %w", err)
 	}
 
