@@ -9,6 +9,7 @@ type Config struct {
 	KubeConfigPath string
 	Namespace      string
 	ConfigMapName  string
+	RuleYamlPath   string
 
 	// Redis configuration
 	RedisHost     string
@@ -28,6 +29,7 @@ func Load() *Config {
 		KubeConfigPath: getEnv("KUBE_CONFIG_PATH", ""),
 		Namespace:      getEnv("NAMESPACE", "default"),
 		ConfigMapName:  getEnv("CONFIG_MAP_NAME", "rule-yaml"),
+		RuleYamlPath:   getEnv("RULE_YAML_FILE_PATH", "/etc/config/rule.yaml"),
 
 		RedisHost:     getEnv("REDIS_HOST", "localhost"),
 		RedisPort:     getEnv("REDIS_PORT", "6379"),
@@ -47,6 +49,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-
-
-

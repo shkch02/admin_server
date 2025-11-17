@@ -9,14 +9,29 @@ import (
 	"admin_server/backend/internal/services"
 
 	"github.com/gin-gonic/gin"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 func main() {
 	// Load configuration
 	cfg := config.Load()
 
+	// --- [추가 시작]: K8s 클라이언트셋 초기화 ---
+	// KubeConfigPath가 비어 있으면 In-Cluster-Config를 사용
+	k8sConfig, err := clientcmd.BuildConfigFromFlags("", cfg.KubeConfigPath)
+	if err != nil {
+		log.Fatalf("Failed to build kubernetes config: %v", err)
+	}
+
+	clientset, err := kubernetes.NewForConfig(k8sConfig)
+	if err != nil {
+		log.Fatalf("Failed to create kubernetes clientset: %v", err)
+	}
+	// --- [추가 끝] ---
+
 	// Initialize services
-	ruleService := services.NewRuleService(cfg)
+	ruleService := services.NewRuleService(cfg, clientset)
 	syscallService := services.NewSyscallService(cfg)
 	alertService := services.NewAlertService(cfg)
 	testService := services.NewTestService(cfg)
@@ -78,4 +93,3 @@ func main() {
 		log.Fatal("Failed to start server:", err)
 	}
 }
-
