@@ -37,7 +37,7 @@ function App() {
       <div className="container">
         <div className="header">
           <h1>IPS 관리자 콘솔</h1>
-          <p>eBPF 시스템콜 기반 보안 위협 탐지, CICD테스트3</p>
+          <p>eBPF 시스템콜 기반 보안 위협 탐지, CICD테스트4</p>
           <Navigation />
         </div>
         <Routes>
