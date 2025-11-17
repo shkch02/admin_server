@@ -80,6 +80,9 @@ stage('Deploy to Kubernetes') {
                         sh "kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG}"
 
                         sh "kustomize build . > deployment.yaml"
+
+                        // 디버깅을 위한 Kustomize 결과물 출력
+                        sh "cat deployment.yaml" // <-- 이 코드를 추가하여 Kustomize 결과물 확인
                         // **SUCCESS 종료 보장**
                         sh "KUBECONFIG=${KUBECONFIG_PATH} kubectl apply -f deployment.yaml || true" 
                     }
