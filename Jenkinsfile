@@ -56,28 +56,28 @@ pipeline {
         // 4단계: Kubernetes에 배포
         stage('Deploy to Kubernetes') {
             steps {
-                script { // <--- 이 'script' 블록은 'steps' 내부의 복잡한 로직을 감싸는 역할만 합니다.
-                    
-                    // 1. SSH 터널에 사용할 로컬 포트를 'script' 내부에서 정의 (def 사용)
-                    def localPort = 8888 
+                script {
+                    def localPort = 8888 // 포트 충돌 방지용
 
-                    // SSH Agent를 사용하여 키 주입
+                    // ... (변수 선언 및 sshagent 블록 시작)
+
                     sshagent(['k8s-master-ssh-key']) {
                         
-                        // 2. SSH 터널 백그라운드에서 실행 (환경 변수 사용)
+                        // 2. SSH 터널 백그라운드에서 실행
                         sh "nohup ssh -o StrictHostKeyChecking=no -N -L ${localPort}:${env.K8S_TARGET_IP}:${env.K8S_PORT} ${env.K8S_USER}@${env.SSH_HOST} &"
-                        
-                        // 3. 터널이 열릴 때까지 잠시 대기
                         sleep 10 
 
-                        // 4. Kubeconfig 임시 수정 및 배포
+                        // 3. Kubeconfig 임시 수정 및 배포
                         withCredentials([file(credentialsId: env.KUBE_CREDS_ID, variable: 'KUBECONFIG_FILE')]) {
                             
-                            // KUBECONFIG 파일 복사 및 API 서버 주소를 127.0.0.1:8888으로 변경
-                            sh "cp ${KUBECONFIG_FILE} tunnel-config.yaml"
-                            sh "sed -i 's|server:.*|server: https://127.0.0.1:${localPort}|g' tunnel-config.yaml"
+                            // *** 핵심 수정 ***
+                            // 1. cp 명령어 제거
+                            // 2. withCredentials가 생성한 임시 파일($KUBECONFIG_FILE)을 'sed'로 바로 수정
+                            // (주의: sed는 복사본을 만드는 대신 파일을 직접 수정함)
+                            sh "sed -i 's|server:.*|server: https://127.0.0.1:${localPort}|g' ${KUBECONFIG_FILE}"
 
-                            sh "export KUBECONFIG=\$(pwd)/tunnel-config.yaml" 
+                            // 4. KUBECONFIG 환경 변수를 이 임시 파일 경로로 설정
+                            sh "export KUBECONFIG=${KUBECONFIG_FILE}" 
 
                             dir('k8s') {
                                 echo "Deploying via SSH tunnel using 127.0.0.1:${localPort}"
@@ -91,7 +91,7 @@ pipeline {
                             sh "unset KUBECONFIG"
                         }
 
-                        // 5. 백그라운드 SSH 터널 프로세스 종료함
+                        // 5. 백그라운드 SSH 터널 프로세스 종료
                         sh "pkill -f 'ssh -N -L ${localPort}:${env.K8S_TARGET_IP}:${env.K8S_PORT}'"
                     }
                 }
