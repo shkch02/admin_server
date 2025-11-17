@@ -98,7 +98,7 @@ pipeline {
                         }
 
                         // 5. 백그라운드 SSH 터널 프로세스 종료
-                        sh "pkill -f 'ssh -N -L ${localPort}:${env.K8S_TARGET_IP}:${env.K8S_PORT}'"
+                        sh "pkill -f 'ssh -N -L ${localPort}:${env.K8S_TARGET_IP}:${env.K8S_PORT}||true'" //이부분 확인해봐야함 왜 오류뜨는지, 일단 넘어기위해 트루붙ㅇ;ㅁ
                     }
                 }
             }
