@@ -25,7 +25,7 @@ func Load() *Config {
 		RuleYamlPath:   getEnv("RULE_YAML_FILE_PATH", "/etc/config/rule.yaml"),
 
 		CCSLRedisAddr: getEnv("CCSL_REDIS_ADDR", "redis-ccsl-svc:6379"),
-		CCSLRedisPassword: getEnv("CCSL_REDIS_PASSWORD", ""),		,
+		CCSLRedisPassword: getEnv("CCSL_REDIS_PASSWORD","")	
 	}
 }
 
