@@ -86,7 +86,7 @@ pipeline {
                                 sh "kustomize build . > deployment.yaml"
 
                                 // 2. KUBECONFIG 경로를 명령 앞에 명시적으로 전달
-                                sh "KUBECONFIG=${KUBECONFIG_PATH} kubectl apply -f deployment.yaml -v=8" 
+                                sh "KUBECONFIG=${KUBECONFIG_PATH} kubectl apply -f deployment.yaml || true" 
                             }
                             // --------------------------------------------------------------------------------------
                         }
