@@ -125,4 +125,10 @@ pv 마운트해서 각종 다이어그램도 볼수있는 기능 추가하면 �
 현재는 목업 데이터를 사용하고 있습니다. 실제 Kubernetes 및 Redis 연결은 각 서비스 파일의 TODO 주석 부분을 구현해야 합니다.ㅋ
 
 
+## 의존성
 
+### 프론트
+
+### 백엔드
+ go get k8s.io/client-go@v0.28.0
+go get k8s.io/apimachinery@v0.28.0
