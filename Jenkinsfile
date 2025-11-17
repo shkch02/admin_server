@@ -85,6 +85,12 @@ stage('Deploy to Kubernetes') {
                         sh "cat deployment.yaml" // <-- 이 코드를 추가하여 Kustomize 결과물 확인
                         // **SUCCESS 종료 보장**
                         sh "KUBECONFIG=${KUBECONFIG_PATH} kubectl apply -f deployment.yaml || true" 
+
+                        // *****************************************************************
+                        // *** 이 부분이 추가됩니다: Deployment 롤아웃 강제 재시작 ***
+                        echo "Forcing frontend deployment rollout restart..."
+                        sh "KUBECONFIG=${KUBECONFIG_PATH} kubectl rollout restart deployment admin-server-frontend -n default || true"
+                        // *****************************************************************
                     }
                 }
             }
