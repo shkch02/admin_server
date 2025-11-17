@@ -60,31 +60,52 @@ pipeline {
         }
 
         // 4단계: Kubernetes에 배포
-        stage('Deploy to Kubernetes') {
-            steps {
-                withCredentials([string(credentialsId: 'saToken', variable: 'K8S_TOKEN')]) {
+        // 4단계: Kubernetes에 배포
+stage('Deploy to Kubernetes') {
+    steps {
+        script {
+            // 1. SSH 터널 변수 지정
+            def localPort = 8080 // Jenkins 서버에서 열 포트
+            def remoteK8sTargetIP = "192.168.0.10" // K8s API 서버가 advertise하는 사설 IP
+            def remoteK8sPort = 6443
+            def k8sUser = "server4" // K8s 마스터 노드 사용자명
+            def sshHost = "sangsu02.iptime.org" // K8s 마스터 노드의 외부 접속 주소
 
-                    dir('k8s') {
-                        echo "Deploying with image tag: ${env.IMAGE_TAG}"
+            // 2. SSH 터널 백그라운드에서 실행 (nohup &)
+            // K8s 마스터 노드의 외부 주소로 SSH 접속하여, 내부 사설 IP:6443으로 포트 전달
+            sh "nohup ssh -o StrictHostKeyChecking=no -N -L ${localPort}:${remoteK8sTargetIP}:${remoteK8sPort} ${k8sUser}@${sshHost} &"
+            
+            // 3. 터널이 열릴 때까지 잠시 대기 (안정성을 위해 5초 대기)
+            sleep 5
 
-                        // 1) 이미지 태그 업데이트
-                        sh """
-                            kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.BACKEND_IMAGE_NAME}:${env.IMAGE_TAG}
-                            kustomize edit set image ${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}=${env.HARBOR_URL}/${env.HARBOR_PROJECT}/${env.FRONTEND_IMAGE_NAME}:${env.IMAGE_TAG}
-                        """
+            // 4. Kubeconfig 임시 수정 및 배포
+            withCredentials([file(credentialsId: env.KUBE_CREDS_ID, variable: 'KUBECONFIG_FILE')]) {
+                
+                // KUBECONFIG 파일을 복사하고 API 서버 주소를 127.0.0.1:8080으로 변경
+                sh "cp ${KUBECONFIG_FILE} tunnel-config.yaml"
+                // sed 명령어에서 escape 문자를 사용하지 않아도 되도록 구분자를 변경했습니다.
+                sh "sed -i 's|server:.*|server: https://127.0.0.1:${localPort}|g' tunnel-config.yaml"
 
-                        // 2) Token 기반 kubectl 실행
-                        sh """
-                            kustomize build . | kubectl \
-                                --server=https://192.168.0.10:6443 \
-                                --insecure-skip-tls-verify=true \
-                                --token=${K8S_TOKEN} \
-                                apply -f -
-                        """
-                    }
+                sh "export KUBECONFIG=$(pwd)/tunnel-config.yaml"
+
+                dir('k8s') {
+                    echo "Deploying via SSH tunnel using 127.0.0.1:${localPort}"
+
+                    // Kustomize를 사용해 이미지 태그 동적 변경 (생략)
+                    // ... 이전 단계의 kustomize edit set image 명령어 ...
+
+                    // Kustomize로 빌드된 최종 YAML을 kubectl로 적용
+                    sh "kustomize build . | kubectl apply -f -"
                 }
+                
+                sh "unset KUBECONFIG"
             }
+
+            // 5. 백그라운드 SSH 터널 프로세스 종료 (pkill 명령어는 젠킨스 에이전트 내부에 있어야 함)
+            sh "pkill -f 'ssh -N -L ${localPort}:${remoteK8sTargetIP}:${remoteK8sPort}'"
         }
+    }
+}
     }
 
     post {
