@@ -27,6 +27,10 @@ type UpdateRulesResponse struct {
 	Message    string `json:"message"`
 	NewVersion string `json:"new_version,omitempty"`
 }
+type SyscallArg struct {
+	Type string `json:"type"`
+	Name string `json:"name"`
+}
 
 // SyscallArg represents a syscall argument
 type Syscall struct {
