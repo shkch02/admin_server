@@ -106,17 +106,17 @@ npm run dev
 ## 구현 상태
 
 현재 구현된 기능:
-- ✅ API 엔드포인트 기본 구조
-- ✅ 프론트엔드 페이지 (Rules, UpdateRules, Alerts, Syscalls, TestAttack)
-- ✅ 프론트-백엔드 연결
-- ✅ 목업 데이터로 기본 동작 확인 가능  ㅁㄴㅇ 
+-  API 엔드포인트 기본 구조
+-  프론트엔드 페이지 (Rules, UpdateRules, Alerts, Syscalls, TestAttack)
+-  프론트-백엔드 연결
+-  목업 데이터로 기본 동작 확인 가능
+-  Kubernetes ConfigMap 실제 읽기/쓰기
+-  Redis 연결 및 데이터 조회 
 
 TODO (실제 구현 필요):
-- ⏳ Kubernetes ConfigMap 실제 읽기/쓰기
-- ⏳ Redis 연결 및 데이터 조회
-- ⏳ Kafka 컨슈머로 알림 수신
-- ⏳ Kubernetes Job 생성
-- ⏳ 룰 엔진 및 eBPF generator 트리거
+-  Kafka 컨슈머로 알림 수신
+-  Kubernetes Job 생성
+-  룰 엔진 및 eBPF generator 트리거
 
 pv 마운트해서 각종 다이어그램도 볼수있는 기능 추가하면 좋을듯
 
