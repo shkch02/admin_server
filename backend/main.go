@@ -8,11 +8,10 @@ import (
 	"admin_server/backend/internal/handlers"
 	"admin_server/backend/internal/services"
 
-	// 컨텍스트 추가
-	"context" // 컨텍스트 추가
+	"context" // 컨텍스트 import
 
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
+	"github.com/redis/go-redis/v9" // Redis 클라이언트 import
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -21,20 +20,20 @@ func main() {
 	// Load configuration
 	cfg := config.Load()
 
-	// --- [추가 시작]: K8s 클라이언트셋 초기화 ---
+	// --- 1. K8s 클라이언트셋 초기화 ---
 	// KubeConfigPath가 비어 있으면 In-Cluster-Config를 사용
-	k8sConfig, err := clientcmd.BuildConfigFromFlags("", cfg.KubeConfigPath)
+	k8sConfig, err := clientcmd.BuildConfigFromFlags("", cfg.KubeConfigPath) // err 변수 첫 선언 (:=)
 	if err != nil {
 		log.Fatalf("Failed to build kubernetes config: %v", err)
 	}
 
-	clientset, err := kubernetes.NewForConfig(k8sConfig)
+	clientset, err := kubernetes.NewForConfig(k8sConfig) // err 변수 재사용 (=)
 	if err != nil {
 		log.Fatalf("Failed to create kubernetes clientset: %v", err)
 	}
-	// --- [추가 끝] ---
+	// --- [수정 끝] ---
 
-	// Initialize CCSL Redis Client (추가)
+	// --- 2. CCSL Redis 클라이언트 초기화 ---
 	ccslRedisClient := redis.NewClient(&redis.Options{
 		Addr:     cfg.CCSLRedisAddr,
 		Password: cfg.CCSLRedisPassword,
@@ -42,20 +41,23 @@ func main() {
 	})
 
 	// Check Redis connection
-	ctx = context.Background()
-	_, err := ccslRedisClient.Ping(ctx).Result()
+	ctx := context.Background()                 // [수정] ctx 변수 사용 전에 선언
+	_, err = ccslRedisClient.Ping(ctx).Result() // err 변수 재사용 (=)
 	if err != nil {
 		log.Fatalf("Failed to connect to CCSL Redis at %s: %v", cfg.CCSLRedisAddr, err)
 	}
 	log.Println("Successfully connected to CCSL Redis")
 
-	// Initialize services
+	// --- 3. 서비스 초기화 ---
 	ruleService := services.NewRuleService(cfg, clientset)
+	// [수정] SyscallService에 Redis 클라이언트 주입
 	syscallService := services.NewSyscallService(cfg, ccslRedisClient)
 	alertService := services.NewAlertService(cfg)
 	testService := services.NewTestService(cfg)
 
-	// Initialize handlers
+	// [삭제] 중복되었던 서비스 초기화 블록 삭제
+
+	// --- 4. 핸들러 초기화 ---
 	ruleHandler := handlers.NewRuleHandler(ruleService)
 	syscallHandler := handlers.NewSyscallHandler(syscallService)
 	alertHandler := handlers.NewAlertHandler(alertService)
@@ -108,7 +110,7 @@ func main() {
 	}
 
 	log.Printf("Server starting on port %s", port)
-	if err := router.Run(":" + port); err != nil {
+	if err = router.Run(":" + port); err != nil { // err 변수 재사용 (=)
 		log.Fatal("Failed to start server:", err)
 	}
 }
