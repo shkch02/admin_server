@@ -42,7 +42,7 @@ func main() {
 	})
 
 	// Check Redis connection
-	ctx := context.Background()
+	ctx = context.Background()
 	_, err := ccslRedisClient.Ping(ctx).Result()
 	if err != nil {
 		log.Fatalf("Failed to connect to CCSL Redis at %s: %v", cfg.CCSLRedisAddr, err)
@@ -51,14 +51,7 @@ func main() {
 
 	// Initialize services
 	ruleService := services.NewRuleService(cfg, clientset)
-	// SyscallService에 Redis 클라이언트 주입 (수정)
 	syscallService := services.NewSyscallService(cfg, ccslRedisClient)
-	alertService := services.NewAlertService(cfg)
-	testService := services.NewTestService(cfg)
-
-	// Initialize services
-	ruleService := services.NewRuleService(cfg, clientset)
-	syscallService := services.NewSyscallService(cfg)
 	alertService := services.NewAlertService(cfg)
 	testService := services.NewTestService(cfg)
 
