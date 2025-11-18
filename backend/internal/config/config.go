@@ -11,9 +11,8 @@ type Config struct {
 	ConfigMapName  string
 	RuleYamlPath   string
 
-
 	// CCSL Redis 설정 (추가)
-	CCSLRedisAddr string
+	CCSLRedisAddr     string
 	CCSLRedisPassword string
 }
 
@@ -24,8 +23,8 @@ func Load() *Config {
 		ConfigMapName:  getEnv("CONFIG_MAP_NAME", "rule-yaml"),
 		RuleYamlPath:   getEnv("RULE_YAML_FILE_PATH", "/etc/config/rule.yaml"),
 
-		CCSLRedisAddr: getEnv("CCSL_REDIS_ADDR", "redis-ccsl-svc:6379"),
-		CCSLRedisPassword: getEnv("CCSL_REDIS_PASSWORD","")	
+		CCSLRedisAddr:     getEnv("CCSL_REDIS_ADDR", "redis-ccsl-svc:6379"),
+		CCSLRedisPassword: getEnv("CCSL_REDIS_PASSWORD", ""),
 	}
 }
 
