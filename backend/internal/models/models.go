@@ -2,9 +2,9 @@ package models
 
 // RuleSet represents the entire ruleset configuration
 type RuleSet struct {
-	RulesetVersion string  `json:"ruleset_version" yaml:"ruleset_version"`
-	Description    string  `json:"description" yaml:"description"`
-	Rules          []Rule  `json:"rules" yaml:"rules"`
+	RulesetVersion string `json:"ruleset_version" yaml:"ruleset_version"`
+	Description    string `json:"description" yaml:"description"`
+	Rules          []Rule `json:"rules" yaml:"rules"`
 }
 
 // Rule represents a single security rule
@@ -23,15 +23,16 @@ type Condition struct {
 
 // UpdateRulesResponse represents the response for updating rules
 type UpdateRulesResponse struct {
-	Status    string `json:"status"`
-	Message   string `json:"message"`
+	Status     string `json:"status"`
+	Message    string `json:"message"`
 	NewVersion string `json:"new_version,omitempty"`
 }
 
 // SyscallArg represents a syscall argument
-type SyscallArg struct {
-	Type string `json:"type"`
-	Name string `json:"name"`
+type Syscall struct {
+	Name        string       `json:"name"`
+	Args        []SyscallArg `json:"args"`
+	Description string       `json:"description"` // <-- [추가]
 }
 
 // Syscall represents a system call with its arguments
@@ -85,6 +86,3 @@ type WebhookAlert struct {
 	Namespace       string                 `json:"namespace"`
 	SyscallLog      map[string]interface{} `json:"syscall_log"`
 }
-
-
-

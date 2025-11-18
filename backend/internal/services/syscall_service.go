@@ -46,7 +46,7 @@ func (s *SyscallService) GetCallableSyscalls() (*models.CallableSyscallsResponse
 			Name: name,
 			// 인자와 설명은 'Source of Truth' Redis에서 가져오거나
 			// 정적 분석 단계에서 채워져야 하지만, 현재는 TBD로 처리합니다.
-			Args:        "TBD",
+			Args:        []models.SyscallArg{},
 			Description: "TBD",
 		}
 	}
