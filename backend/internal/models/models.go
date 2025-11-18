@@ -35,12 +35,6 @@ type Syscall struct {
 	Description string       `json:"description"` // <-- [추가]
 }
 
-// Syscall represents a system call with its arguments
-type Syscall struct {
-	Name string       `json:"name"`
-	Args []SyscallArg `json:"args"`
-}
-
 // CallableSyscallsResponse represents the response for callable syscalls
 type CallableSyscallsResponse struct {
 	TotalCount int       `json:"total_count"`
