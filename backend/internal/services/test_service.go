@@ -27,7 +27,7 @@ func NewTestService(cfg *config.Config) *TestService {
 
 // 프론트가 보낸 http 트리거 처리 함수, http 핸들러에서 호출됨, testType에 rule ID 담겨서 오니까 그거로 분리
 func (s *TestService) TriggerTest(testType string) (*models.TriggerTestResponse, error) {
-	log.Printf("Triggering test: %s (mock implementation)", testType)
+	log.Printf("Triggering test: %s", testType)
 
 	baseURL := "http://attacker-service:80"
 	var targetURL string
