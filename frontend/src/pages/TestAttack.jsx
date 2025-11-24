@@ -67,7 +67,7 @@ function TestAttack() {
       <div className="card">
         <h3>테스트 가능한 공격</h3>
         <p style={{ marginBottom: '20px', color: '#7f8c8d' }}>
-          테스트할 룰을 선택하면 해당 룰을 위반하는 동작을 수행하는 Kubernetes Job이 생성됩니다.
+          테스트할 룰을 선택하면 룰을 위반하는 동작을 수행합니다.
         </p>
 
         {rules.length === 0 ? (
