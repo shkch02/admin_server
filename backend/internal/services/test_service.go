@@ -62,6 +62,6 @@ func (s *TestService) TriggerTest(testType string) (*models.TriggerTestResponse,
 
 	return &models.TriggerTestResponse{
 		Status:  "test_triggered",
-		JobName: jobName,
+		JobName: fmt.Sprintf("http-trigger-%s", testType), // Job 이름 대신 트리거 ID 반환
 	}, nil
 }
