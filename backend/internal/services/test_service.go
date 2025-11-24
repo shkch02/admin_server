@@ -43,7 +43,7 @@ func (s *TestService) TriggerTest(testType string) (*models.TriggerTestResponse,
 		targetURL = baseURL + "/attack/read"
 	}
 
-	//targetURL에 요청 전송
+	//targetURL에 요청 전송함
 	resp, err := s.httpClient.Get(targetURL)
 	if err != nil {
 		log.Printf("ERROR: Failed to trigger test %s: %v", testType, err)
