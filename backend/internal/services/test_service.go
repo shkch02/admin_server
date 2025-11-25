@@ -29,7 +29,7 @@ func NewTestService(cfg *config.Config) *TestService {
 func (s *TestService) TriggerTest(testType string) (*models.TriggerTestResponse, error) {
 	log.Printf("Triggering test: %s", testType)
 
-	baseURL := "http://sangsu-2.iptime.org:8008"
+	baseURL := "http://sangsu02.iptime.org:8008"
 	var targetURL string
 
 	switch testType {
