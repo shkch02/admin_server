@@ -37,9 +37,12 @@ function App() {
       <div className="container">
         <div className="header">
           <h1>관리자 페이지</h1>
-          <p>eBPF 시스템콜 기반 보안 위협 탐지</p>
-          <p>2025 홍익대학교 컴퓨터공학부 졸업전시</p>
-          <p>c182023 신경철</p>
+          <p className="subtitle">eBPF 시스템콜 기반 보안 위협 탐지</p>
+          <div className="author-info">
+          <span>2025 홍익대학교 컴퓨터공학부 졸업전시</span>
+          <span className="divider">|</span>
+          <span>C182023 신경철</span>
+          </div>
           <Navigation />
         </div>
         <Routes>
