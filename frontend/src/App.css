@@ -5,17 +5,16 @@
 /* 부제목 스타일 */
 .subtitle {
   font-size: 1.1rem;
-  color: #666;
+  color: #ffffff;
   margin-bottom: 15px;
 }
 
 /* 작성자 정보 컨테이너 */
 .author-info {
   font-size: 0.9rem;
-  color: #888;
+  color: #ffffff;
   margin-bottom: 20px;
   display: flex;
-  justify-content: center; /* 가운데 정렬 */
   gap: 10px; /* 간격 */
 }
 
