@@ -36,8 +36,10 @@ function App() {
     <Router>
       <div className="container">
         <div className="header">
-          <h1>IPS 관리자 콘솔</h1>
+          <h1>관리자 페이지</h1>
           <p>eBPF 시스템콜 기반 보안 위협 탐지</p>
+          <p>2025 홍익대학교 컴퓨터공학부 졸업전시</p>
+          <p>c182023 신경철</p>
           <Navigation />
         </div>
         <Routes>
@@ -47,7 +49,7 @@ function App() {
           <Route path="/syscalls" element={<Syscalls />} />
           <Route path="/test-attack" element={<TestAttack />} />
         </Routes>
-        <p className="version-info">버전 (v1.1.4)</p>
+        <p className="version-info">버전 (v2.0.0)</p>
       </div>
     </Router>
   )
