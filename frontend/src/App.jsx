@@ -18,8 +18,8 @@ function Navigation() {
       <Link to="/update-rules" className={location.pathname === '/update-rules' ? 'active' : ''}>
         룰 수정
       </Link>
-      <Link to="/alerts" className={location.pathname === '/alerts' ? 'active' : ''}>
-        알림 로그
+      <Link to="/diagram" className={location.pathname === '/diagram' ? 'active' : ''}>
+        클러스터 구조도
       </Link>
       <Link to="/syscalls" className={location.pathname === '/syscalls' ? 'active' : ''}>
         시스템콜 목록
@@ -48,7 +48,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Rules />} />
           <Route path="/update-rules" element={<UpdateRules />} />
-          <Route path="/alerts" element={<Alerts />} />
+          <Route path="/diagram" element={<ClusterDiagram />} />
           <Route path="/syscalls" element={<Syscalls />} />
           <Route path="/test-attack" element={<TestAttack />} />
         </Routes>
