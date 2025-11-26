@@ -33,7 +33,7 @@ function TestAttack() {
       setSuccess(null)
 
       const response = await triggerTest(testType)
-      setSuccess(`공격 테스트가 실행되었습니다! 생성된 Job: ${response.job_name}`)
+      setSuccess(`공격 테스트가 실행되었습니다! 공격 이름 : ${response.job_name}`)
     } catch (err) {
       setError(err.response?.data?.error || err.message || '공격 테스트 실행에 실패했습니다.')
     } finally {
