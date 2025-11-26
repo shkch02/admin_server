@@ -62,7 +62,7 @@ func (s *AlertService) GetAlerts(limit int, since *time.Time) (*models.AlertsRes
 	//     Password: s.cfg.RedisPassword,
 	//     DB:       s.cfg.RedisDB,
 	// })
-	// 
+	//
 	// // Get alerts from Redis sorted set or list
 	// alerts, err := redisClient.ZRangeByScore(context.TODO(), "alerts", &redis.ZRangeBy{
 	//     Min: sinceTimestamp,
@@ -100,7 +100,7 @@ func (s *AlertService) ReceiveWebhook(alert *models.WebhookAlert) error {
 	//     Password: s.cfg.RedisPassword,
 	//     DB:       s.cfg.RedisDB,
 	// })
-	// 
+	//
 	// alertJSON, _ := json.Marshal(newAlert)
 	// err := redisClient.LPush(context.TODO(), "alerts", alertJSON).Err()
 	// or use sorted set with timestamp as score
@@ -110,4 +110,3 @@ func (s *AlertService) ReceiveWebhook(alert *models.WebhookAlert) error {
 
 	return nil
 }
-
