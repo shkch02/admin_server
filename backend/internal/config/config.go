@@ -28,7 +28,7 @@ func Load() *Config {
 	}
 }
 
-func getEnv(key, defaultValue string) string {
+func getEnv(key, defaultValue string) string { //기본값 처리 위한 getEnv함수
 	if value := os.Getenv(key); value != "" {
 		return value
 	}
