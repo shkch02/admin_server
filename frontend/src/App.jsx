@@ -25,7 +25,7 @@ function Navigation() {
         시스템콜 목록
       </Link>
       <Link to="/test-attack" className={location.pathname === '/test-attack' ? 'active' : ''}>
-        공격 테스트
+        공격 테스트 www.linkedin.com/in/경철-신-063215339
       </Link>
     </nav>
   )
