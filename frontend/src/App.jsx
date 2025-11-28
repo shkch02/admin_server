@@ -41,7 +41,7 @@ function App() {
           <div className="author-info">
           <span>2025 홍익대학교 컴퓨터공학부 졸업전시</span>
           <span className="divider">|</span>
-          <span>C182023 신경철</span>
+          <span>C182023 신경철 | www.linkedin.com/in/경철-신-063215339</span>
           </div>
           <Navigation />
         </div>
